@@ -43,15 +43,15 @@
 }
 
 :root {
-  --primary: var(--color-emerald-600);
-  --primary-foreground: var(--color-emerald-50);
-  --sidebar-primary: var(--color-emerald-600);
-  --sidebar-primary-foreground: var(--color-emerald-50);
-  --chart-1: var(--color-emerald-300);
-  --chart-2: var(--color-emerald-500);
-  --chart-3: var(--color-emerald-600);
-  --chart-4: var(--color-emerald-700);
-  --chart-5: var(--color-emerald-800);
+  --primary: var(--color-cyan-600);
+  --primary-foreground: var(--color-cyan-50);
+  --sidebar-primary: var(--color-cyan-600);
+  --sidebar-primary-foreground: var(--color-cyan-50);
+  --chart-1: var(--color-cyan-300);
+  --chart-2: var(--color-cyan-500);
+  --chart-3: var(--color-cyan-600);
+  --chart-4: var(--color-cyan-700);
+  --chart-5: var(--color-cyan-800);
   --radius: 0.65rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.235 0.015 65);
@@ -79,10 +79,10 @@
 }
 
 .dark {
-  --primary: var(--color-emerald-600);
-  --primary-foreground: var(--color-emerald-50);
-  --sidebar-primary: var(--color-emerald-500);
-  --sidebar-primary-foreground: var(--color-emerald-50);
+  --primary: var(--color-cyan-500);
+  --primary-foreground: var(--color-cyan-50);
+  --sidebar-primary: var(--color-cyan-500);
+  --sidebar-primary-foreground: var(--color-cyan-50);
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.85 0.005 65);
   --card: oklch(0.21 0.006 285.885);
@@ -100,11 +100,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-emerald-300);
-  --chart-2: var(--color-emerald-500);
-  --chart-3: var(--color-emerald-600);
-  --chart-4: var(--color-emerald-700);
-  --chart-5: var(--color-emerald-800);
+  --chart-1: var(--color-cyan-300);
+  --chart-2: var(--color-cyan-500);
+  --chart-3: var(--color-cyan-600);
+  --chart-4: var(--color-cyan-700);
+  --chart-5: var(--color-cyan-800);
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.85 0.005 65);
   --sidebar-accent: oklch(0.274 0.006 286.033);
@@ -177,7 +177,17 @@
 }
 @layer utilities {
   .gradient-text {
-    @apply bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-600 bg-clip-text text-transparent;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
   .cyber-grid {

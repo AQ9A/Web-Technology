@@ -90,3 +90,28 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Prioritize Shodan results over direct TCP scanning for Cloudflare-protected sites
 - [ ] Display Shodan-detected ports separately or with indicator
 - [ ] Add organization/ISP info from Shodan to results page
+
+
+## Critical Bug - Port Scanning Still Shows All Ports
+- [ ] Debug why Shodan API is not being called properly
+- [ ] Check Shodan API key validity
+- [ ] Add detailed logging to see if Shodan returns data
+- [ ] Fix port scanning to show only real open ports
+- [ ] Test with ksa.com to verify accurate results
+
+
+## Major Redesign - Web Technology
+- [x] Change project name to "Web Technology"
+- [x] Remove all Vulnerabilities features from backend
+- [x] Remove Vulnerabilities tab from frontend
+- [ ] Update database schema (remove vulnerabilities table)
+- [x] Design new modern color scheme (Cyan/Blue theme)
+- [x] Add smooth animations and transitions
+- [ ] Add interactive dashboard with statistics
+- [ ] Add PDF export functionality
+- [ ] Add scan comparison feature
+- [ ] Add interactive charts for data visualization
+- [x] Improve icons and graphics
+- [ ] Add skeleton loading states
+- [x] Enhance responsive design
+- [x] Update logo and branding

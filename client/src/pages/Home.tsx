@@ -59,7 +59,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-8">
             <Card className="bg-card/50 backdrop-blur border-primary/20">
               <CardHeader>
                 <Globe className="w-8 h-8 text-primary mb-2" />
@@ -84,17 +84,7 @@ export default function Home() {
               </CardContent>
             </Card>
             
-            <Card className="bg-card/50 backdrop-blur border-primary/20">
-              <CardHeader>
-                <AlertTriangle className="w-8 h-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Vulnerability Detection</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Detect common security vulnerabilities
-                </p>
-              </CardContent>
-            </Card>
+
           </div>
 
           <Button size="lg" asChild className="glow">
@@ -214,10 +204,7 @@ export default function Home() {
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
                   <span>SSL/TLS Certificate Analysis</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
-                  <span>Common Vulnerability Detection</span>
-                </div>
+
               </CardContent>
             </Card>
 

@@ -678,17 +678,7 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
 
     // Vulnerability Check
     try {
-      const vulnerabilities = await checkVulnerabilities(domain);
-      for (const vuln of vulnerabilities) {
-        await db.createVulnerability({
-          scanId,
-          title: vuln.title,
-          severity: vuln.severity,
-          description: vuln.description,
-          recommendation: vuln.recommendation,
-          affectedUrl: vuln.affectedUrl
-        });
-      }
+      // Vulnerability scanning removed - focusing on reconnaissance only
     } catch (error) {
       console.error('Vulnerability check step failed:', error);
     }

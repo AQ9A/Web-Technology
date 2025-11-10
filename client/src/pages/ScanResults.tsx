@@ -91,17 +91,8 @@ export default function ScanResults() {
     );
   }
 
-  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, vulnerabilities, historicalDns, historicalWhois, historicalIps } = results;
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'secondary';
-    }
-  };
+  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, historicalDns, historicalWhois, historicalIps } = results;
+  const vulnerabilities = []; // Removed vulnerability scanning
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -177,14 +168,13 @@ export default function ScanResults() {
           {/* Results Tabs */}
           {scan.status === 'completed' && (
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-8">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="subdomains">Subdomains</TabsTrigger>
                 <TabsTrigger value="ports">Ports</TabsTrigger>
-                <TabsTrigger value="tech">Technologies</TabsTrigger>
+                <TabsTrigger value="technologies">Technologies</TabsTrigger>
                 <TabsTrigger value="dns">DNS</TabsTrigger>
                 <TabsTrigger value="ssl">SSL/TLS</TabsTrigger>
-                <TabsTrigger value="vulns">Vulnerabilities</TabsTrigger>
                 <TabsTrigger value="historical">Historical</TabsTrigger>
               </TabsList>
 
@@ -480,54 +470,7 @@ export default function ScanResults() {
                 </Card>
               </TabsContent>
 
-              {/* Vulnerabilities Tab */}
-              <TabsContent value="vulns">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Potential Vulnerabilities</CardTitle>
-                    <CardDescription>Found {vulnerabilities.length} potential issues</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {vulnerabilities.length > 0 ? (
-                      <div className="space-y-4">
-                        {vulnerabilities.map((vuln) => (
-                          <Card key={vuln.id} className="border-l-4" style={{
-                            borderLeftColor: vuln.severity === 'critical' || vuln.severity === 'high' ? 'hsl(var(--destructive))' : 
-                                           vuln.severity === 'medium' ? 'hsl(var(--primary))' : 'hsl(var(--muted))'
-                          }}>
-                            <CardHeader>
-                              <div className="flex items-start justify-between">
-                                <CardTitle className="text-base">{vuln.title}</CardTitle>
-                                <Badge variant={getSeverityColor(vuln.severity)}>
-                                  {vuln.severity.toUpperCase()}
-                                </Badge>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                              <div>
-                                <span className="text-sm font-medium">Description:</span>
-                                <p className="text-sm text-muted-foreground mt-1">{vuln.description}</p>
-                              </div>
-                              <div>
-                                <span className="text-sm font-medium">Recommendation:</span>
-                                <p className="text-sm text-muted-foreground mt-1">{vuln.recommendation}</p>
-                              </div>
-                              {vuln.affectedUrl && (
-                                <div>
-                                  <span className="text-sm font-medium">Affected URL:</span>
-                                  <p className="text-sm text-muted-foreground font-mono mt-1">{vuln.affectedUrl}</p>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-8">No vulnerabilities detected</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+
 
               {/* Historical Data Tab */}
               <TabsContent value="historical" className="space-y-4">
