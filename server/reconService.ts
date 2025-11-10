@@ -318,6 +318,7 @@ async function scanPorts(host: string): Promise<PortResult[]> {
 
 /**
  * Detect technologies using HTTP headers and response analysis
+ * Enhanced with better detection patterns
  */
 export async function detectTechnologies(domain: string): Promise<TechnologyResult[]> {
   const technologies: TechnologyResult[] = [];
@@ -326,87 +327,116 @@ export async function detectTechnologies(domain: string): Promise<TechnologyResu
     const response = await fetch(`https://${domain}`, {
       method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ReconBot/1.0)'
-      }
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      redirect: 'follow'
     });
 
     const headers = response.headers;
     const html = await response.text();
+    const headersObj: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      headersObj[key.toLowerCase()] = value;
+    });
+
+    console.log(`[Tech Detection] Analyzing ${domain}...`);
 
     // Server detection
-    const server = headers.get('server');
-    if (server) {
+    if (headersObj['server']) {
+      const serverParts = headersObj['server'].split('/');
       technologies.push({
-        name: server.split('/')[0],
-        version: server.split('/')[1],
+        name: serverParts[0],
+        version: serverParts[1],
         category: 'Web Server',
         confidence: 100
       });
     }
 
     // X-Powered-By detection
-    const poweredBy = headers.get('x-powered-by');
-    if (poweredBy) {
+    if (headersObj['x-powered-by']) {
+      const poweredByParts = headersObj['x-powered-by'].split('/');
       technologies.push({
-        name: poweredBy.split('/')[0],
-        version: poweredBy.split('/')[1],
-        category: 'Programming Language',
+        name: poweredByParts[0],
+        version: poweredByParts[1],
+        category: 'Backend',
         confidence: 100
       });
     }
 
-    // Framework detection from HTML
-    if (html.includes('wp-content') || html.includes('wordpress')) {
+    // CDN Detection
+    if (headersObj['cf-ray'] || headersObj['server']?.toLowerCase().includes('cloudflare')) {
       technologies.push({
-        name: 'WordPress',
+        name: 'Cloudflare',
+        category: 'CDN',
+        confidence: 100
+      });
+    }
+
+    if (headersObj['x-amz-cf-id'] || headersObj['x-amz-cf-pop']) {
+      technologies.push({
+        name: 'Amazon CloudFront',
+        category: 'CDN',
+        confidence: 100
+      });
+    }
+
+    // CMS Detection (improved)
+    const cmsPatterns = [
+      { pattern: /wp-content|wp-includes|wordpress/i, name: 'WordPress', confidence: 95 },
+      { pattern: /\/sites\/all\/|drupal/i, name: 'Drupal', confidence: 95 },
+      { pattern: /\/components\/com_|joomla/i, name: 'Joomla', confidence: 95 },
+      { pattern: /shopify/i, name: 'Shopify', confidence: 90 },
+      { pattern: /wix\.com|wixstatic/i, name: 'Wix', confidence: 90 },
+      { pattern: /squarespace/i, name: 'Squarespace', confidence: 90 },
+    ];
+
+    for (const { pattern, name, confidence } of cmsPatterns) {
+      if (pattern.test(html)) {
+        technologies.push({ name, category: 'CMS', confidence });
+      }
+    }
+
+    // JavaScript Frameworks
+    const jsFrameworks = [
+      { pattern: /__NEXT_DATA__|next\.js/i, name: 'Next.js', confidence: 95 },
+      { pattern: /__nuxt|nuxt\.js/i, name: 'Nuxt.js', confidence: 95 },
+      { pattern: /react|_react/i, name: 'React', confidence: 85 },
+      { pattern: /__vue|vue\.js/i, name: 'Vue.js', confidence: 85 },
+      { pattern: /ng-version|angular/i, name: 'Angular', confidence: 85 },
+      { pattern: /jquery/i, name: 'jQuery', confidence: 90 },
+    ];
+
+    for (const { pattern, name, confidence } of jsFrameworks) {
+      if (pattern.test(html)) {
+        technologies.push({ name, category: 'JavaScript Framework', confidence });
+      }
+    }
+
+    // Analytics & Tracking
+    if (html.includes('google-analytics.com') || html.includes('gtag')) {
+      technologies.push({ name: 'Google Analytics', category: 'Analytics', confidence: 100 });
+    }
+
+    if (html.includes('googletagmanager.com')) {
+      technologies.push({ name: 'Google Tag Manager', category: 'Tag Manager', confidence: 100 });
+    }
+
+    // Meta tags detection
+    const generatorMatch = html.match(/<meta[^>]*name=["']generator["'][^>]*content=["']([^"']+)["']/i);
+    if (generatorMatch) {
+      const generator = generatorMatch[1];
+      technologies.push({
+        name: generator.split(' ')[0],
+        version: generator.split(' ')[1],
         category: 'CMS',
-        confidence: 90
+        confidence: 100
       });
     }
 
-    if (html.includes('Joomla')) {
-      technologies.push({
-        name: 'Joomla',
-        category: 'CMS',
-        confidence: 90
-      });
-    }
+    console.log(`[Tech Detection] Found ${technologies.length} technologies`);
 
-    if (html.includes('Drupal')) {
-      technologies.push({
-        name: 'Drupal',
-        category: 'CMS',
-        confidence: 90
-      });
-    }
-
-    // JavaScript frameworks
-    if (html.includes('react') || html.includes('React')) {
-      technologies.push({
-        name: 'React',
-        category: 'JavaScript Framework',
-        confidence: 80
-      });
-    }
-
-    if (html.includes('vue') || html.includes('Vue')) {
-      technologies.push({
-        name: 'Vue.js',
-        category: 'JavaScript Framework',
-        confidence: 80
-      });
-    }
-
-    if (html.includes('angular') || html.includes('Angular')) {
-      technologies.push({
-        name: 'Angular',
-        category: 'JavaScript Framework',
-        confidence: 80
-      });
-    }
-
-  } catch (error) {
-    console.error('Technology detection failed:', error);
+  } catch (error: any) {
+    console.error('[Tech Detection] Failed:', error.message);
   }
 
   return technologies;
