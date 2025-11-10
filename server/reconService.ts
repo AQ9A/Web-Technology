@@ -1,5 +1,6 @@
 import dns from 'dns/promises';
 import https from 'https';
+import net from 'net';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as db from './db';
@@ -65,7 +66,7 @@ interface VulnerabilityResult {
 export async function performWhoisLookup(domain: string): Promise<WhoisData> {
   try {
     // Try using whois command if available
-    const { stdout } = await execAsync(`whois ${domain}`);
+    const { stdout } = await execAsync(`whois ${domain}`, { timeout: 10000 });
     
     const lines = stdout.split('\n');
     const data: WhoisData = {
@@ -94,9 +95,12 @@ export async function performWhoisLookup(domain: string): Promise<WhoisData> {
 
     return data;
   } catch (error) {
-    console.error('WHOIS lookup failed:', error);
+    console.warn('WHOIS lookup failed, continuing with limited data:', error);
+    // Return minimal data instead of failing
     return {
-      rawData: `WHOIS lookup failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      rawData: `WHOIS lookup not available for this domain`,
+      nameServers: [],
+      status: []
     };
   }
 }
@@ -202,7 +206,6 @@ export async function scanPorts(host: string): Promise<PortResult[]> {
   const results: PortResult[] = [];
 
   // Simple port check using Node.js net module
-  const net = require('net');
   
   for (const { port, service } of commonPorts) {
     try {
@@ -460,99 +463,128 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
     await db.updateScan(scanId, { status: 'running', progress: 10 });
 
     // WHOIS Lookup
-    const whoisData = await performWhoisLookup(domain);
-    await db.createWhoisInfo({
-      scanId,
-      registrar: whoisData.registrar,
-      creationDate: whoisData.creationDate,
-      expirationDate: whoisData.expirationDate,
-      nameServers: whoisData.nameServers?.join(', '),
-      status: whoisData.status?.join(', '),
-      rawData: whoisData.rawData
-    });
+    try {
+      const whoisData = await performWhoisLookup(domain);
+      await db.createWhoisInfo({
+        scanId,
+        registrar: whoisData.registrar,
+        creationDate: whoisData.creationDate,
+        expirationDate: whoisData.expirationDate,
+        nameServers: whoisData.nameServers?.join(', '),
+        status: whoisData.status?.join(', '),
+        rawData: whoisData.rawData
+      });
+    } catch (error) {
+      console.error('WHOIS step failed:', error);
+    }
     await db.updateScan(scanId, { progress: 20 });
 
     // DNS Lookup
-    const dnsRecords = await performDnsLookup(domain);
-    for (const record of dnsRecords) {
-      await db.createDnsRecord({
-        scanId,
-        recordType: record.type,
-        value: record.value
-      });
+    try {
+      const dnsRecords = await performDnsLookup(domain);
+      for (const record of dnsRecords) {
+        await db.createDnsRecord({
+          scanId,
+          recordType: record.type,
+          value: record.value
+        });
+      }
+    } catch (error) {
+      console.error('DNS lookup step failed:', error);
     }
     await db.updateScan(scanId, { progress: 35 });
 
     // Subdomain Discovery
-    const subdomains = await discoverSubdomains(domain);
-    for (const sub of subdomains) {
-      await db.createSubdomain({
-        scanId,
-        subdomain: sub.subdomain,
-        ipAddress: sub.ipAddress,
-        isAlive: sub.isAlive,
-        statusCode: sub.statusCode
-      });
+    try {
+      const subdomains = await discoverSubdomains(domain);
+      for (const sub of subdomains) {
+        await db.createSubdomain({
+          scanId,
+          subdomain: sub.subdomain,
+          ipAddress: sub.ipAddress,
+          isAlive: sub.isAlive,
+          statusCode: sub.statusCode
+        });
+      }
+    } catch (error) {
+      console.error('Subdomain discovery step failed:', error);
     }
     await db.updateScan(scanId, { progress: 50 });
 
     // Port Scanning (on main domain)
-    const mainIp = dnsRecords.find(r => r.type === 'A')?.value;
-    if (mainIp) {
-      const ports = await scanPorts(mainIp);
-      for (const port of ports) {
-        await db.createPort({
-          scanId,
-          host: mainIp,
-          port: port.port,
-          service: port.service,
-          version: port.version,
-          state: port.state
-        });
+    try {
+      const dnsRecords = await performDnsLookup(domain);
+      const mainIp = dnsRecords.find(r => r.type === 'A')?.value;
+      if (mainIp) {
+        const ports = await scanPorts(mainIp);
+        for (const port of ports) {
+          await db.createPort({
+            scanId,
+            host: mainIp,
+            port: port.port,
+            service: port.service,
+            version: port.version,
+            state: port.state
+          });
+        }
       }
+    } catch (error) {
+      console.error('Port scanning step failed:', error);
     }
     await db.updateScan(scanId, { progress: 65 });
 
     // Technology Detection
-    const technologies = await detectTechnologies(domain);
-    for (const tech of technologies) {
-      await db.createTechnology({
-        scanId,
-        name: tech.name,
-        version: tech.version,
-        category: tech.category,
-        confidence: tech.confidence
-      });
+    try {
+      const technologies = await detectTechnologies(domain);
+      for (const tech of technologies) {
+        await db.createTechnology({
+          scanId,
+          name: tech.name,
+          version: tech.version,
+          category: tech.category,
+          confidence: tech.confidence
+        });
+      }
+    } catch (error) {
+      console.error('Technology detection step failed:', error);
     }
     await db.updateScan(scanId, { progress: 80 });
 
     // SSL Certificate Check
-    const sslCert = await getSslCertificate(domain);
-    if (sslCert) {
-      await db.createSslCertificate({
-        scanId,
-        issuer: sslCert.issuer,
-        subject: sslCert.subject,
-        validFrom: sslCert.validFrom,
-        validTo: sslCert.validTo,
-        serialNumber: sslCert.serialNumber,
-        signatureAlgorithm: sslCert.signatureAlgorithm,
-        isValid: sslCert.isValid
-      });
+    try {
+      const sslCert = await getSslCertificate(domain);
+      if (sslCert) {
+        await db.createSslCertificate({
+          scanId,
+          issuer: sslCert.issuer,
+          subject: sslCert.subject,
+          validFrom: sslCert.validFrom,
+          validTo: sslCert.validTo,
+          serialNumber: sslCert.serialNumber,
+          signatureAlgorithm: sslCert.signatureAlgorithm,
+          isValid: sslCert.isValid
+        });
+      }
+    } catch (error) {
+      console.error('SSL certificate check step failed:', error);
     }
     await db.updateScan(scanId, { progress: 90 });
 
     // Vulnerability Check
-    const vulnerabilities = await checkVulnerabilities(domain);
-    for (const vuln of vulnerabilities) {
-      await db.createVulnerability({
-        scanId,
-        title: vuln.title,
-        severity: vuln.severity,
-        description: vuln.description,
-        recommendation: vuln.recommendation,
-        affectedUrl: vuln.affectedUrl
-      });
+    try {
+      const vulnerabilities = await checkVulnerabilities(domain);
+      for (const vuln of vulnerabilities) {
+        await db.createVulnerability({
+          scanId,
+          title: vuln.title,
+          severity: vuln.severity,
+          description: vuln.description,
+          recommendation: vuln.recommendation,
+          affectedUrl: vuln.affectedUrl
+        });
+      }
+    } catch (error) {
+      console.error('Vulnerability check step failed:', error);
     }
 
     // Mark scan as completed

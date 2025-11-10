@@ -34,8 +34,14 @@
 ## المرحلة 4: الاختبار والنشر
 - [x] اختبار جميع APIs
 - [x] اختبار واجهة المستخدم
-- [ ] حفظ نقطة استعادة (Checkpoint)
+- [x] حفظ نقطة استعادة (Checkpoint)
 
 ## Language Requirement
 - [x] Ensure all UI text is in English
 - [x] Update all labels, buttons, and messages to English
+
+
+## Bug Fixes
+- [x] Fix scan failure issue for testphp.vulnweb.com
+- [x] Add better error handling and logging
+- [x] Improve scan reliability
