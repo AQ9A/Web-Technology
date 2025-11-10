@@ -1,0 +1,41 @@
+# Project TODO - Recon & Pentest Tool
+
+## المرحلة 1: قاعدة البيانات
+- [x] إنشاء جدول scans لحفظ عمليات الفحص
+- [x] إنشاء جدول subdomains لحفظ النطاقات الفرعية
+- [x] إنشاء جدول ports لحفظ المنافذ المفتوحة
+- [x] إنشاء جدول technologies لحفظ التقنيات المكتشفة
+- [x] إنشاء جدول vulnerabilities لحفظ الثغرات المحتملة
+
+## المرحلة 2: الواجهة الخلفية (Backend)
+- [x] تطوير API لجلب معلومات WHOIS
+- [x] تطوير API لاكتشاف النطاقات الفرعية (Subdomain Enumeration)
+- [x] تطوير API لفحص المنافذ (Port Scanning)
+- [x] تطوير API لاكتشاف التقنيات المستخدمة (Technology Detection)
+- [x] تطوير API لفحص DNS Records
+- [x] تطوير API لفحص SSL/TLS Certificate
+- [x] تطوير API لاكتشاف الثغرات الشائعة
+- [x] تطوير API لحفظ واسترجاع نتائج الفحص
+
+## المرحلة 3: الواجهة الأمامية (Frontend)
+- [x] تصميم صفحة رئيسية بواجهة احترافية (Cybersecurity Theme)
+- [x] إنشاء نموذج إدخال النطاق (Domain Input)
+- [x] عرض حالة الفحص (Scanning Progress)
+- [x] عرض نتائج WHOIS
+- [x] عرض النطاقات الفرعية المكتشفة
+- [x] عرض المنافذ المفتوحة
+- [x] عرض التقنيات المكتشفة
+- [x] عرض DNS Records
+- [x] عرض معلومات SSL Certificate
+- [x] عرض الثغرات المحتملة
+- [x] إضافة ميزة تصدير النتائج (Export Results)
+- [x] إضافة ميزة عرض سجل الفحوصات السابقة
+
+## المرحلة 4: الاختبار والنشر
+- [x] اختبار جميع APIs
+- [x] اختبار واجهة المستخدم
+- [ ] حفظ نقطة استعادة (Checkpoint)
+
+## Language Requirement
+- [x] Ensure all UI text is in English
+- [x] Update all labels, buttons, and messages to English

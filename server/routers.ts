@@ -1,10 +1,12 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import * as db from "./db";
+import * as reconService from "./reconService";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +19,81 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  scan: router({
+    // Create a new scan
+    create: protectedProcedure
+      .input(z.object({
+        domain: z.string().min(1)
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const scan = await db.createScan({
+          userId: ctx.user.id,
+          domain: input.domain,
+          status: 'pending',
+          progress: 0
+        });
+
+        // Start the scan asynchronously
+        reconService.performFullScan(scan.id, input.domain).catch(err => {
+          console.error('Scan error:', err);
+        });
+
+        return scan;
+      }),
+
+    // Get scan by ID
+    getById: protectedProcedure
+      .input(z.object({
+        id: z.number()
+      }))
+      .query(async ({ input }) => {
+        return await db.getScanById(input.id);
+      }),
+
+    // Get user's scans
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getUserScans(ctx.user.id);
+      }),
+
+    // Get scan results
+    getResults: protectedProcedure
+      .input(z.object({
+        scanId: z.number()
+      }))
+      .query(async ({ input }) => {
+        const [
+          scan,
+          subdomains,
+          ports,
+          technologies,
+          dnsRecords,
+          whoisInfo,
+          sslCertificate,
+          vulnerabilities
+        ] = await Promise.all([
+          db.getScanById(input.scanId),
+          db.getScanSubdomains(input.scanId),
+          db.getScanPorts(input.scanId),
+          db.getScanTechnologies(input.scanId),
+          db.getScanDnsRecords(input.scanId),
+          db.getScanWhoisInfo(input.scanId),
+          db.getScanSslCertificate(input.scanId),
+          db.getScanVulnerabilities(input.scanId)
+        ]);
+
+        return {
+          scan,
+          subdomains,
+          ports,
+          technologies,
+          dnsRecords,
+          whoisInfo,
+          sslCertificate,
+          vulnerabilities
+        };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

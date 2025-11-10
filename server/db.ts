@@ -1,11 +1,37 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, 
+  users, 
+  scans, 
+  Scan, 
+  InsertScan,
+  subdomains,
+  Subdomain,
+  InsertSubdomain,
+  ports,
+  Port,
+  InsertPort,
+  technologies,
+  Technology,
+  InsertTechnology,
+  dnsRecords,
+  DnsRecord,
+  InsertDnsRecord,
+  whoisInfo,
+  WhoisInfo,
+  InsertWhoisInfo,
+  sslCertificates,
+  SslCertificate,
+  InsertSslCertificate,
+  vulnerabilities,
+  Vulnerability,
+  InsertVulnerability
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +115,143 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Scan operations
+export async function createScan(scan: InsertScan): Promise<Scan> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(scans).values(scan);
+  const insertedId = Number(result[0].insertId);
+  
+  const inserted = await db.select().from(scans).where(eq(scans.id, insertedId)).limit(1);
+  return inserted[0];
+}
+
+export async function updateScan(id: number, updates: Partial<InsertScan>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(scans).set(updates).where(eq(scans.id, id));
+}
+
+export async function getScanById(id: number): Promise<Scan | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(scans).where(eq(scans.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getUserScans(userId: number): Promise<Scan[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(scans).where(eq(scans.userId, userId)).orderBy(desc(scans.createdAt));
+}
+
+// Subdomain operations
+export async function createSubdomain(subdomain: InsertSubdomain): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(subdomains).values(subdomain);
+}
+
+export async function getScanSubdomains(scanId: number): Promise<Subdomain[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(subdomains).where(eq(subdomains.scanId, scanId));
+}
+
+// Port operations
+export async function createPort(port: InsertPort): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(ports).values(port);
+}
+
+export async function getScanPorts(scanId: number): Promise<Port[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(ports).where(eq(ports.scanId, scanId));
+}
+
+// Technology operations
+export async function createTechnology(technology: InsertTechnology): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(technologies).values(technology);
+}
+
+export async function getScanTechnologies(scanId: number): Promise<Technology[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(technologies).where(eq(technologies.scanId, scanId));
+}
+
+// DNS Record operations
+export async function createDnsRecord(record: InsertDnsRecord): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(dnsRecords).values(record);
+}
+
+export async function getScanDnsRecords(scanId: number): Promise<DnsRecord[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(dnsRecords).where(eq(dnsRecords.scanId, scanId));
+}
+
+// WHOIS operations
+export async function createWhoisInfo(info: InsertWhoisInfo): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(whoisInfo).values(info);
+}
+
+export async function getScanWhoisInfo(scanId: number): Promise<WhoisInfo | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(whoisInfo).where(eq(whoisInfo.scanId, scanId)).limit(1);
+  return result[0];
+}
+
+// SSL Certificate operations
+export async function createSslCertificate(cert: InsertSslCertificate): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(sslCertificates).values(cert);
+}
+
+export async function getScanSslCertificate(scanId: number): Promise<SslCertificate | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(sslCertificates).where(eq(sslCertificates.scanId, scanId)).limit(1);
+  return result[0];
+}
+
+// Vulnerability operations
+export async function createVulnerability(vuln: InsertVulnerability): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(vulnerabilities).values(vuln);
+}
+
+export async function getScanVulnerabilities(scanId: number): Promise<Vulnerability[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(vulnerabilities).where(eq(vulnerabilities.scanId, scanId));
+}
