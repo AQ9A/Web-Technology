@@ -5,6 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as db from './db';
 import * as securityTrails from './securityTrailsService';
+import { getBannerInfo } from './bannerGrabbing';
 
 const execAsync = promisify(exec);
 
@@ -557,15 +558,24 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
         console.log(`[Port Scan] Scanning ${domain} (IP: ${mainIp})`);
         const ports = await scanPorts(mainIp);
         console.log(`[Port Scan] Found ${ports.length} open ports on ${domain} (${mainIp})`);
+        
+        // Perform banner grabbing for each open port
         for (const port of ports) {
+          console.log(`[Banner Grab] Grabbing banner from port ${port.port}...`);
+          const bannerInfo = await getBannerInfo(mainIp, port.port, port.service || 'Unknown');
+          
           await db.createPort({
             scanId,
             host: mainIp,
             port: port.port,
             service: port.service,
-            version: port.version,
+            version: bannerInfo.version || port.version,
             state: port.state
           });
+          
+          if (bannerInfo.version) {
+            console.log(`[Banner Grab] Port ${port.port}: ${bannerInfo.version}`);
+          }
         }
       } else {
         console.warn(`[Port Scan] No A record found for ${domain}, skipping port scan`);

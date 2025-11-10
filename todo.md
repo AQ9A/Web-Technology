@@ -73,3 +73,12 @@
 - [x] Add clarification in UI that only real open ports are shown
 
 Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many ports open by design for security testing purposes.
+
+
+## Critical Fixes & New Features
+- [x] FIX: Port scanning is scanning localhost instead of target domain
+- [x] Debug and fix DNS resolution in port scanning
+- [x] Add banner grabbing for service version detection
+- [x] Add Shodan API integration (optional with API key)
+- [x] Improve vulnerability checks to be more accurate
+- [ ] Test with real domains (google.com, github.com) to verify accuracy
