@@ -380,36 +380,123 @@ export async function detectTechnologies(domain: string): Promise<TechnologyResu
       });
     }
 
-    // CMS Detection (improved)
-    const cmsPatterns = [
-      { pattern: /wp-content|wp-includes|wordpress/i, name: 'WordPress', confidence: 95 },
-      { pattern: /\/sites\/all\/|drupal/i, name: 'Drupal', confidence: 95 },
-      { pattern: /\/components\/com_|joomla/i, name: 'Joomla', confidence: 95 },
-      { pattern: /shopify/i, name: 'Shopify', confidence: 90 },
-      { pattern: /wix\.com|wixstatic/i, name: 'Wix', confidence: 90 },
-      { pattern: /squarespace/i, name: 'Squarespace', confidence: 90 },
+    // CMS Detection with version extraction
+    // WordPress version detection
+    const wpVersionMatch = html.match(/wp-includes\/js\/[^"']*\?ver=([\d.]+)/i) || 
+                          html.match(/wordpress\s+([\d.]+)/i) ||
+                          html.match(/<meta[^>]*generator[^>]*WordPress\s+([\d.]+)/i);
+    if (html.match(/wp-content|wp-includes|wordpress/i)) {
+      technologies.push({ 
+        name: 'WordPress', 
+        version: wpVersionMatch ? wpVersionMatch[1] : undefined,
+        category: 'CMS', 
+        confidence: 95 
+      });
+    }
+
+    // Drupal version detection
+    const drupalVersionMatch = html.match(/Drupal\s+([\d.]+)/i) ||
+                               html.match(/<meta[^>]*generator[^>]*Drupal\s+([\d.]+)/i);
+    if (html.match(/\/sites\/all\/|drupal/i)) {
+      technologies.push({ 
+        name: 'Drupal', 
+        version: drupalVersionMatch ? drupalVersionMatch[1] : undefined,
+        category: 'CMS', 
+        confidence: 95 
+      });
+    }
+
+    // Joomla version detection
+    const joomlaVersionMatch = html.match(/Joomla!?\s+([\d.]+)/i) ||
+                               html.match(/<meta[^>]*generator[^>]*Joomla!?\s+([\d.]+)/i);
+    if (html.match(/\/components\/com_|joomla/i)) {
+      technologies.push({ 
+        name: 'Joomla', 
+        version: joomlaVersionMatch ? joomlaVersionMatch[1] : undefined,
+        category: 'CMS', 
+        confidence: 95 
+      });
+    }
+
+    // Other CMS (no version detection)
+    const otherCms = [
+      { pattern: /shopify/i, name: 'Shopify' },
+      { pattern: /wix\.com|wixstatic/i, name: 'Wix' },
+      { pattern: /squarespace/i, name: 'Squarespace' },
     ];
 
-    for (const { pattern, name, confidence } of cmsPatterns) {
+    for (const { pattern, name } of otherCms) {
       if (pattern.test(html)) {
-        technologies.push({ name, category: 'CMS', confidence });
+        technologies.push({ name, category: 'CMS', confidence: 90 });
       }
     }
 
-    // JavaScript Frameworks
-    const jsFrameworks = [
-      { pattern: /__NEXT_DATA__|next\.js/i, name: 'Next.js', confidence: 95 },
-      { pattern: /__nuxt|nuxt\.js/i, name: 'Nuxt.js', confidence: 95 },
-      { pattern: /react|_react/i, name: 'React', confidence: 85 },
-      { pattern: /__vue|vue\.js/i, name: 'Vue.js', confidence: 85 },
-      { pattern: /ng-version|angular/i, name: 'Angular', confidence: 85 },
-      { pattern: /jquery/i, name: 'jQuery', confidence: 90 },
-    ];
+    // JavaScript Frameworks with version detection
+    // React version detection
+    const reactVersionMatch = html.match(/react@([\d.]+)/i) ||
+                             html.match(/react[.-]([\d.]+)\.(?:min\.)?js/i);
+    if (html.match(/react|_react/i)) {
+      technologies.push({ 
+        name: 'React', 
+        version: reactVersionMatch ? reactVersionMatch[1] : undefined,
+        category: 'JavaScript Framework', 
+        confidence: 85 
+      });
+    }
 
-    for (const { pattern, name, confidence } of jsFrameworks) {
-      if (pattern.test(html)) {
-        technologies.push({ name, category: 'JavaScript Framework', confidence });
-      }
+    // Vue.js version detection
+    const vueVersionMatch = html.match(/vue@([\d.]+)/i) ||
+                           html.match(/vue[.-]([\d.]+)\.(?:min\.)?js/i);
+    if (html.match(/__vue|vue\.js/i)) {
+      technologies.push({ 
+        name: 'Vue.js', 
+        version: vueVersionMatch ? vueVersionMatch[1] : undefined,
+        category: 'JavaScript Framework', 
+        confidence: 85 
+      });
+    }
+
+    // Angular version detection
+    const angularVersionMatch = html.match(/ng-version=["']([\d.]+)["']/i) ||
+                               html.match(/angular@([\d.]+)/i);
+    if (html.match(/ng-version|angular/i)) {
+      technologies.push({ 
+        name: 'Angular', 
+        version: angularVersionMatch ? angularVersionMatch[1] : undefined,
+        category: 'JavaScript Framework', 
+        confidence: 85 
+      });
+    }
+
+    // jQuery version detection
+    const jqueryVersionMatch = html.match(/jquery[.-]([\d.]+)\.(?:min\.)?js/i) ||
+                              html.match(/jquery@([\d.]+)/i);
+    if (html.match(/jquery/i)) {
+      technologies.push({ 
+        name: 'jQuery', 
+        version: jqueryVersionMatch ? jqueryVersionMatch[1] : undefined,
+        category: 'JavaScript Framework', 
+        confidence: 90 
+      });
+    }
+
+    // Next.js version detection
+    const nextVersionMatch = html.match(/"buildId":"([^"]+)"/i);
+    if (html.match(/__NEXT_DATA__|next\.js/i)) {
+      technologies.push({ 
+        name: 'Next.js', 
+        category: 'JavaScript Framework', 
+        confidence: 95 
+      });
+    }
+
+    // Nuxt.js detection
+    if (html.match(/__nuxt|nuxt\.js/i)) {
+      technologies.push({ 
+        name: 'Nuxt.js', 
+        category: 'JavaScript Framework', 
+        confidence: 95 
+      });
     }
 
     // Analytics & Tracking

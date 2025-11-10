@@ -164,3 +164,13 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Enhanced technology detection with better patterns
 - [x] Added detection for CDNs, CMS, JS frameworks, Analytics
 - [x] Improved detection accuracy and coverage
+
+
+## New Features - Technology Versions & Icons
+- [x] Enhance version detection for WordPress
+- [x] Enhance version detection for React and other JS frameworks
+- [x] Add version detection for Drupal, Joomla, jQuery, Vue, Angular
+- [x] Add colorful technology icons to UI with emoji
+- [x] Display technology logos (WordPress, React, Vue, Angular, etc.)
+- [x] Improve visual presentation of Technologies tab with card grid layout
+- [x] Add color-coded borders and backgrounds for each technology category

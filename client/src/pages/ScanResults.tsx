@@ -366,38 +366,92 @@ export default function ScanResults() {
               </TabsContent>
 
               {/* Technologies Tab */}
-              <TabsContent value="tech">
+              <TabsContent value="technologies">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Detected Technologies</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <Code className="w-5 h-5" />
+                      Detected Technologies
+                    </CardTitle>
                     <CardDescription>Found {technologies.length} technologies</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {technologies.length > 0 ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Technology</TableHead>
-                            <TableHead>Version</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Confidence</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {technologies.map((tech) => (
-                            <TableRow key={tech.id}>
-                              <TableCell className="font-medium">{tech.name}</TableCell>
-                              <TableCell className="font-mono">{tech.version || 'N/A'}</TableCell>
-                              <TableCell>{tech.category || 'Unknown'}</TableCell>
-                              <TableCell>
-                                {tech.confidence ? `${tech.confidence}%` : 'N/A'}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {technologies.map((tech) => {
+                          // Technology icon mapping with colors
+                          const getTechIcon = (name: string) => {
+                            const techName = name.toLowerCase();
+                            
+                            // CMS Icons
+                            if (techName.includes('wordpress')) return { emoji: '📝', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' };
+                            if (techName.includes('drupal')) return { emoji: '💧', color: 'bg-blue-600/10 text-blue-600 border-blue-600/20' };
+                            if (techName.includes('joomla')) return { emoji: '🌟', color: 'bg-orange-500/10 text-orange-500 border-orange-500/20' };
+                            if (techName.includes('shopify')) return { emoji: '🛍️', color: 'bg-green-500/10 text-green-500 border-green-500/20' };
+                            if (techName.includes('wix')) return { emoji: '🎨', color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
+                            if (techName.includes('squarespace')) return { emoji: '⬛', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
+                            
+                            // JavaScript Frameworks
+                            if (techName.includes('react')) return { emoji: '⚛️', color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20' };
+                            if (techName.includes('vue')) return { emoji: '💚', color: 'bg-green-600/10 text-green-600 border-green-600/20' };
+                            if (techName.includes('angular')) return { emoji: '🅰️', color: 'bg-red-500/10 text-red-500 border-red-500/20' };
+                            if (techName.includes('next')) return { emoji: '▲', color: 'bg-black/10 text-white border-gray-500/20' };
+                            if (techName.includes('nuxt')) return { emoji: '💚', color: 'bg-green-500/10 text-green-500 border-green-500/20' };
+                            if (techName.includes('jquery')) return { emoji: 'Ⓙ', color: 'bg-blue-400/10 text-blue-400 border-blue-400/20' };
+                            
+                            // Web Servers
+                            if (techName.includes('nginx')) return { emoji: '🟢', color: 'bg-green-700/10 text-green-700 border-green-700/20' };
+                            if (techName.includes('apache')) return { emoji: '🪶', color: 'bg-red-600/10 text-red-600 border-red-600/20' };
+                            if (techName.includes('cloudflare')) return { emoji: '☁️', color: 'bg-orange-400/10 text-orange-400 border-orange-400/20' };
+                            if (techName.includes('cloudfront')) return { emoji: '☁️', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' };
+                            
+                            // Analytics
+                            if (techName.includes('analytics')) return { emoji: '📊', color: 'bg-yellow-600/10 text-yellow-600 border-yellow-600/20' };
+                            if (techName.includes('tag manager')) return { emoji: '🏷️', color: 'bg-blue-700/10 text-blue-700 border-blue-700/20' };
+                            
+                            // Default
+                            return { emoji: '🔧', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
+                          };
+
+                          const icon = getTechIcon(tech.name);
+
+                          return (
+                            <Card key={tech.id} className={`border ${icon.color} hover:shadow-lg transition-shadow`}>
+                              <CardContent className="pt-6">
+                                <div className="flex items-start gap-3">
+                                  <div className="text-3xl">{icon.emoji}</div>
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-lg truncate">{tech.name}</h3>
+                                    {tech.version && (
+                                      <p className="text-sm font-mono text-muted-foreground mt-1">
+                                        v{tech.version}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {tech.category || 'Unknown'}
+                                      </Badge>
+                                      {tech.confidence && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          {tech.confidence}% confidence
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
                     ) : (
-                      <p className="text-center text-muted-foreground py-8">No technologies detected</p>
+                      <div className="text-center py-12">
+                        <Code className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">No technologies detected</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Try scanning a different domain or check if the site is accessible
+                        </p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
