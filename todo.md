@@ -125,3 +125,16 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Add hover effects and micro-interactions
 - [x] Enhance typography and spacing
 - [ ] Add loading skeletons for better UX
+
+
+## Update App Name
+- [ ] Change APP_TITLE in const.ts to "Web Technology"
+- [ ] Update all references to app name in code
+
+
+## C99.nl Subdomain Finder Integration
+- [x] Add c99.nl subdomain scraping functionality
+- [x] Parse HTML results from c99.nl
+- [x] Merge c99.nl subdomains with existing results
+- [x] Remove duplicates and sort subdomains
+- [x] Display combined results in subdomain section

@@ -7,6 +7,7 @@ import * as db from './db';
 import * as securityTrails from './securityTrailsService';
 import { getBannerInfo } from './bannerGrabbing';
 import { getShodanHostInfo } from './shodanService';
+import { fetchC99Subdomains } from './c99SubdomainService';
 
 const execAsync = promisify(exec);
 
@@ -568,16 +569,36 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
     }
     await db.updateScan(scanId, { progress: 35 });
 
-    // Subdomain Discovery
+    // Subdomain Discovery (multiple sources)
     try {
-      const subdomains = await discoverSubdomains(domain);
-      for (const sub of subdomains) {
+      // Basic subdomain discovery
+      const basicSubdomains = await discoverSubdomains(domain);
+      
+      // Fetch additional subdomains from C99.nl
+      console.log('[C99] Fetching subdomains from c99.nl...');
+      const c99Result = await fetchC99Subdomains(domain);
+      
+      // Combine all sources
+      const allSubdomainStrings = [
+        ...basicSubdomains.map(s => s.subdomain),
+        ...c99Result.subdomains
+      ];
+      
+      // Remove duplicates
+      const uniqueSubdomains = Array.from(new Set(allSubdomainStrings));
+      console.log(`[Subdomain] Total unique subdomains: ${uniqueSubdomains.length} (${basicSubdomains.length} basic + ${c99Result.subdomains.length} from C99)`);
+      
+      // Save all unique subdomains
+      for (const subdomainStr of uniqueSubdomains) {
+        // Find if we have IP info from basic discovery
+        const basicInfo = basicSubdomains.find(s => s.subdomain === subdomainStr);
+        
         await db.createSubdomain({
           scanId,
-          subdomain: sub.subdomain,
-          ipAddress: sub.ipAddress,
-          isAlive: sub.isAlive,
-          statusCode: sub.statusCode
+          subdomain: subdomainStr,
+          ipAddress: basicInfo?.ipAddress,
+          isAlive: basicInfo?.isAlive ?? false,
+          statusCode: basicInfo?.statusCode
         });
       }
     } catch (error) {
