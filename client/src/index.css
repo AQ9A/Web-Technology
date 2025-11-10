@@ -182,7 +182,7 @@
 
   .animate-gradient {
     background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
+    animation: gradient 4s ease infinite;
   }
 
   @keyframes gradient {
@@ -192,16 +192,59 @@
 
   .cyber-grid {
     background-image: 
-      linear-gradient(to right, oklch(0.488 0.243 264.376 / 5%) 1px, transparent 1px),
-      linear-gradient(to bottom, oklch(0.488 0.243 264.376 / 5%) 1px, transparent 1px);
-    background-size: 40px 40px;
+      linear-gradient(to right, oklch(0.488 0.243 264.376 / 8%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.488 0.243 264.376 / 8%) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: grid-move 30s linear infinite;
+  }
+
+  @keyframes grid-move {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
   }
 
   .glow {
-    box-shadow: 0 0 20px oklch(0.488 0.243 264.376 / 30%);
+    box-shadow: 
+      0 0 30px oklch(0.488 0.243 264.376 / 25%),
+      0 0 60px oklch(0.488 0.243 264.376 / 15%),
+      0 0 90px oklch(0.488 0.243 264.376 / 8%);
   }
 
   .glow-text {
-    text-shadow: 0 0 10px oklch(0.488 0.243 264.376 / 50%);
+    text-shadow: 
+      0 0 20px oklch(0.488 0.243 264.376 / 60%),
+      0 0 40px oklch(0.488 0.243 264.376 / 40%),
+      0 0 60px oklch(0.488 0.243 264.376 / 20%);
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: oklch(1 0 0 / 5%);
+    backdrop-filter: blur(12px);
+    border: 1px solid oklch(1 0 0 / 10%);
+  }
+
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: oklch(0.141 0.005 285.823);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.488 0.243 264.376 / 40%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.488 0.243 264.376 / 60%);
+  }
+
+  /* Smooth transitions */
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

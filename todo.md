@@ -115,3 +115,13 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [ ] Add skeleton loading states
 - [x] Enhance responsive design
 - [x] Update logo and branding
+
+
+## UI/UX Enhancements
+- [ ] Update app title to "Web Technology" in Settings (requires manual update in Management UI)
+- [x] Redesign Home page with better visual hierarchy
+- [x] Add animated background effects
+- [x] Improve card designs with glassmorphism
+- [x] Add hover effects and micro-interactions
+- [x] Enhance typography and spacing
+- [ ] Add loading skeletons for better UX
