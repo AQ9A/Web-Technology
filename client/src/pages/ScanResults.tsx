@@ -79,7 +79,7 @@ export default function ScanResults() {
     );
   }
 
-  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, vulnerabilities } = results;
+  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, vulnerabilities, historicalDns, historicalWhois, historicalIps } = results;
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -154,7 +154,7 @@ export default function ScanResults() {
           {/* Results Tabs */}
           {scan.status === 'completed' && (
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="subdomains">Subdomains</TabsTrigger>
                 <TabsTrigger value="ports">Ports</TabsTrigger>
@@ -162,6 +162,7 @@ export default function ScanResults() {
                 <TabsTrigger value="dns">DNS</TabsTrigger>
                 <TabsTrigger value="ssl">SSL/TLS</TabsTrigger>
                 <TabsTrigger value="vulns">Vulnerabilities</TabsTrigger>
+                <TabsTrigger value="historical">Historical</TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -498,6 +499,164 @@ export default function ScanResults() {
                       </div>
                     ) : (
                       <p className="text-center text-muted-foreground py-8">No vulnerabilities detected</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Historical Data Tab */}
+              <TabsContent value="historical" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Historical DNS Records</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{historicalDns?.length || 0}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Historical WHOIS</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{historicalWhois?.length || 0}</div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Historical IPs</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{historicalIps?.length || 0}</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Historical DNS Records */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Historical DNS Records</CardTitle>
+                    <CardDescription>DNS record changes over time from SecurityTrails</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {historicalDns && historicalDns.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Value</TableHead>
+                            <TableHead>First Seen</TableHead>
+                            <TableHead>Last Seen</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {historicalDns.map((record) => (
+                            <TableRow key={record.id}>
+                              <TableCell>
+                                <Badge variant="outline">{record.recordType}</Badge>
+                              </TableCell>
+                              <TableCell className="font-mono text-sm">{record.value}</TableCell>
+                              <TableCell className="text-sm">{record.firstSeen || 'N/A'}</TableCell>
+                              <TableCell className="text-sm">{record.lastSeen || 'N/A'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">No historical DNS data available</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Historical IPs */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Historical IP Addresses</CardTitle>
+                    <CardDescription>IP address changes over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {historicalIps && historicalIps.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>IP Address</TableHead>
+                            <TableHead>First Seen</TableHead>
+                            <TableHead>Last Seen</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {historicalIps.map((ip) => (
+                            <TableRow key={ip.id}>
+                              <TableCell className="font-mono">{ip.ipAddress}</TableCell>
+                              <TableCell className="text-sm">{ip.firstSeen || 'N/A'}</TableCell>
+                              <TableCell className="text-sm">{ip.lastSeen || 'N/A'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">No historical IP data available</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Historical WHOIS */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Historical WHOIS Data</CardTitle>
+                    <CardDescription>WHOIS information changes over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {historicalWhois && historicalWhois.length > 0 ? (
+                      <div className="space-y-4">
+                        {historicalWhois.map((whois) => (
+                          <Card key={whois.id} className="bg-muted/50">
+                            <CardContent className="pt-6 space-y-2">
+                              {whois.registrar && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  <span className="text-sm font-medium">Registrar:</span>
+                                  <span className="text-sm col-span-3">{whois.registrar}</span>
+                                </div>
+                              )}
+                              {whois.created && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  <span className="text-sm font-medium">Created:</span>
+                                  <span className="text-sm col-span-3">{whois.created}</span>
+                                </div>
+                              )}
+                              {whois.expires && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  <span className="text-sm font-medium">Expires:</span>
+                                  <span className="text-sm col-span-3">{whois.expires}</span>
+                                </div>
+                              )}
+                              {whois.registrantName && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  <span className="text-sm font-medium">Registrant:</span>
+                                  <span className="text-sm col-span-3">{whois.registrantName}</span>
+                                </div>
+                              )}
+                              {whois.registrantOrg && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  <span className="text-sm font-medium">Organization:</span>
+                                  <span className="text-sm col-span-3">{whois.registrantOrg}</span>
+                                </div>
+                              )}
+                              {whois.nameServers && (
+                                <div className="grid grid-cols-4 gap-2">
+                                  <span className="text-sm font-medium">Name Servers:</span>
+                                  <span className="text-sm col-span-3">{whois.nameServers}</span>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-8">No historical WHOIS data available</p>
                     )}
                   </CardContent>
                 </Card>

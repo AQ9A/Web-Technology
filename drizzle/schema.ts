@@ -150,3 +150,53 @@ export const vulnerabilities = mysqlTable("vulnerabilities", {
 
 export type Vulnerability = typeof vulnerabilities.$inferSelect;
 export type InsertVulnerability = typeof vulnerabilities.$inferInsert;
+
+/**
+ * Historical DNS Records table - stores historical DNS data from SecurityTrails
+ */
+export const historicalDns = mysqlTable("historicalDns", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  recordType: varchar("recordType", { length: 10 }).notNull(),
+  value: text("value").notNull(),
+  firstSeen: varchar("firstSeen", { length: 100 }),
+  lastSeen: varchar("lastSeen", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HistoricalDns = typeof historicalDns.$inferSelect;
+export type InsertHistoricalDns = typeof historicalDns.$inferInsert;
+
+/**
+ * Historical WHOIS table - stores historical WHOIS data
+ */
+export const historicalWhois = mysqlTable("historicalWhois", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  registrar: varchar("registrar", { length: 255 }),
+  created: varchar("created", { length: 100 }),
+  expires: varchar("expires", { length: 100 }),
+  updated: varchar("updated", { length: 100 }),
+  nameServers: text("nameServers"),
+  registrantName: varchar("registrantName", { length: 255 }),
+  registrantOrg: varchar("registrantOrg", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HistoricalWhois = typeof historicalWhois.$inferSelect;
+export type InsertHistoricalWhois = typeof historicalWhois.$inferInsert;
+
+/**
+ * Historical IPs table - stores historical IP addresses
+ */
+export const historicalIps = mysqlTable("historicalIps", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }).notNull(),
+  firstSeen: varchar("firstSeen", { length: 100 }),
+  lastSeen: varchar("lastSeen", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type HistoricalIp = typeof historicalIps.$inferSelect;
+export type InsertHistoricalIp = typeof historicalIps.$inferInsert;

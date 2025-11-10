@@ -26,7 +26,16 @@ import {
   InsertSslCertificate,
   vulnerabilities,
   Vulnerability,
-  InsertVulnerability
+  InsertVulnerability,
+  historicalDns,
+  HistoricalDns,
+  InsertHistoricalDns,
+  historicalWhois,
+  HistoricalWhois,
+  InsertHistoricalWhois,
+  historicalIps,
+  HistoricalIp,
+  InsertHistoricalIp
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -254,4 +263,49 @@ export async function getScanVulnerabilities(scanId: number): Promise<Vulnerabil
   if (!db) throw new Error("Database not available");
   
   return await db.select().from(vulnerabilities).where(eq(vulnerabilities.scanId, scanId));
+}
+
+// Historical DNS operations
+export async function createHistoricalDns(record: InsertHistoricalDns): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(historicalDns).values(record);
+}
+
+export async function getScanHistoricalDns(scanId: number): Promise<HistoricalDns[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(historicalDns).where(eq(historicalDns.scanId, scanId));
+}
+
+// Historical WHOIS operations
+export async function createHistoricalWhois(record: InsertHistoricalWhois): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(historicalWhois).values(record);
+}
+
+export async function getScanHistoricalWhois(scanId: number): Promise<HistoricalWhois[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(historicalWhois).where(eq(historicalWhois.scanId, scanId));
+}
+
+// Historical IP operations
+export async function createHistoricalIp(record: InsertHistoricalIp): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(historicalIps).values(record);
+}
+
+export async function getScanHistoricalIps(scanId: number): Promise<HistoricalIp[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(historicalIps).where(eq(historicalIps.scanId, scanId));
 }

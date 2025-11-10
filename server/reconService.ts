@@ -4,6 +4,7 @@ import net from 'net';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as db from './db';
+import * as securityTrails from './securityTrailsService';
 
 const execAsync = promisify(exec);
 
@@ -585,6 +586,86 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       }
     } catch (error) {
       console.error('Vulnerability check step failed:', error);
+    }
+    await db.updateScan(scanId, { progress: 95 });
+
+    // SecurityTrails Historical Data
+    try {
+      console.log('Fetching SecurityTrails historical data...');
+      
+      // Get historical DNS records
+      const historicalDNSResult = await securityTrails.getDNSHistory(domain);
+      if (historicalDNSResult) {
+        for (const [recordType, data] of Object.entries(historicalDNSResult)) {
+          if (data && data.records) {
+            for (const record of data.records) {
+              if (record.values && Array.isArray(record.values)) {
+                for (const value of record.values) {
+                  await db.createHistoricalDns({
+                    scanId,
+                    recordType: recordType.toUpperCase(),
+                    value: value.ip || value.value || '',
+                    firstSeen: value.first_seen,
+                    lastSeen: value.last_seen
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Get historical WHOIS data
+      const historicalWhoisResult = await securityTrails.getHistoricalWhois(domain);
+      if (historicalWhoisResult.data && historicalWhoisResult.data.result) {
+        for (const whoisRecord of historicalWhoisResult.data.result) {
+          await db.createHistoricalWhois({
+            scanId,
+            registrar: whoisRecord.registrar,
+            created: whoisRecord.created,
+            expires: whoisRecord.expires,
+            updated: whoisRecord.updated,
+            nameServers: whoisRecord.nameservers?.join(', '),
+            registrantName: whoisRecord.contacts?.registrant?.name,
+            registrantOrg: whoisRecord.contacts?.registrant?.organization
+          });
+        }
+      }
+
+      // Get historical IPs
+      const historicalIPsResult = await securityTrails.getHistoricalIPs(domain);
+      if (historicalIPsResult.data && historicalIPsResult.data.records) {
+        for (const ipRecord of historicalIPsResult.data.records) {
+          await db.createHistoricalIp({
+            scanId,
+            ipAddress: ipRecord.ip,
+            firstSeen: ipRecord.first_seen,
+            lastSeen: ipRecord.last_seen
+          });
+        }
+      }
+
+      // Enhanced subdomain discovery from SecurityTrails
+      const stSubdomains = await securityTrails.getSubdomainsList(domain);
+      if (stSubdomains && stSubdomains.length > 0) {
+        console.log(`Found ${stSubdomains.length} additional subdomains from SecurityTrails`);
+        for (const subdomain of stSubdomains.slice(0, 100)) { // Limit to 100 to avoid overwhelming
+          const fullDomain = `${subdomain}.${domain}`;
+          // Check if we already have this subdomain
+          const existing = await db.getScanSubdomains(scanId);
+          const alreadyExists = existing.some(s => s.subdomain === fullDomain);
+          
+          if (!alreadyExists) {
+            await db.createSubdomain({
+              scanId,
+              subdomain: fullDomain,
+              isAlive: false // We don't know yet, would need to check
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('SecurityTrails data fetch failed (continuing anyway):', error);
     }
 
     // Mark scan as completed

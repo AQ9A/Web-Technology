@@ -45,3 +45,13 @@
 - [x] Fix scan failure issue for testphp.vulnweb.com
 - [x] Add better error handling and logging
 - [x] Improve scan reliability
+
+
+## SecurityTrails API Integration
+- [x] Request SecurityTrails API key from user
+- [x] Create SecurityTrails service module
+- [x] Fetch historical DNS records
+- [x] Fetch historical WHOIS data
+- [x] Fetch subdomain history
+- [x] Display historical data in UI
+- [x] Add historical data to database schema

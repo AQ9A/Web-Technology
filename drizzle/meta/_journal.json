@@ -15,6 +15,13 @@
       "when": 1762811114621,
       "tag": "0001_wild_bill_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1762811945263,
+      "tag": "0002_mighty_abomination",
+      "breakpoints": true
     }
   ]
 }

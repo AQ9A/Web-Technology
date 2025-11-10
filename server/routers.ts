@@ -70,7 +70,10 @@ export const appRouter = router({
           dnsRecords,
           whoisInfo,
           sslCertificate,
-          vulnerabilities
+          vulnerabilities,
+          historicalDns,
+          historicalWhois,
+          historicalIps
         ] = await Promise.all([
           db.getScanById(input.scanId),
           db.getScanSubdomains(input.scanId),
@@ -79,7 +82,10 @@ export const appRouter = router({
           db.getScanDnsRecords(input.scanId),
           db.getScanWhoisInfo(input.scanId),
           db.getScanSslCertificate(input.scanId),
-          db.getScanVulnerabilities(input.scanId)
+          db.getScanVulnerabilities(input.scanId),
+          db.getScanHistoricalDns(input.scanId),
+          db.getScanHistoricalWhois(input.scanId),
+          db.getScanHistoricalIps(input.scanId)
         ]);
 
         return {
@@ -90,7 +96,10 @@ export const appRouter = router({
           dnsRecords,
           whoisInfo,
           sslCertificate,
-          vulnerabilities
+          vulnerabilities,
+          historicalDns,
+          historicalWhois,
+          historicalIps
         };
       }),
   }),
