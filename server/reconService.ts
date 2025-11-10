@@ -554,7 +554,9 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       const dnsRecords = await performDnsLookup(domain);
       const mainIp = dnsRecords.find(r => r.type === 'A')?.value;
       if (mainIp) {
+        console.log(`[Port Scan] Scanning ${domain} (IP: ${mainIp})`);
         const ports = await scanPorts(mainIp);
+        console.log(`[Port Scan] Found ${ports.length} open ports on ${domain} (${mainIp})`);
         for (const port of ports) {
           await db.createPort({
             scanId,
@@ -565,6 +567,8 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
             state: port.state
           });
         }
+      } else {
+        console.warn(`[Port Scan] No A record found for ${domain}, skipping port scan`);
       }
     } catch (error) {
       console.error('Port scanning step failed:', error);

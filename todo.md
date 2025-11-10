@@ -64,3 +64,12 @@
 - [x] Fix port scanning to be accurate and real (no fake data)
 - [x] Implement proper TCP connection testing for ports
 - [x] Remove mock/fake port data
+
+
+## Critical Bug Fix
+- [x] Fix port scanning - currently scanning localhost instead of target domain
+- [x] Ensure port scan uses the actual target IP address from DNS lookup
+- [x] Add logging to verify correct IP is being scanned
+- [x] Add clarification in UI that only real open ports are shown
+
+Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many ports open by design for security testing purposes.

@@ -321,7 +321,9 @@ export default function ScanResults() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Open Ports</CardTitle>
-                    <CardDescription>Found {ports.length} open ports</CardDescription>
+                    <CardDescription>
+                      Found {ports.length} open ports. Only ports that accept TCP connections are shown (verified with real connection tests).
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {ports.length > 0 ? (
