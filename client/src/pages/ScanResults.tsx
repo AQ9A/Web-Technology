@@ -91,7 +91,7 @@ export default function ScanResults() {
     );
   }
 
-  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, historicalDns, historicalWhois, historicalIps } = results;
+  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, historicalDns, historicalWhois, historicalIps, waybackSnapshots } = results;
   const vulnerabilities = []; // Removed vulnerability scanning
 
   const getStatusIcon = (status: string) => {
@@ -168,7 +168,7 @@ export default function ScanResults() {
           {/* Results Tabs */}
           {scan.status === 'completed' && (
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="subdomains">Subdomains</TabsTrigger>
                 <TabsTrigger value="ports">Ports</TabsTrigger>
@@ -176,6 +176,7 @@ export default function ScanResults() {
                 <TabsTrigger value="dns">DNS</TabsTrigger>
                 <TabsTrigger value="ssl">SSL/TLS</TabsTrigger>
                 <TabsTrigger value="historical">Historical</TabsTrigger>
+                <TabsTrigger value="wayback">Wayback</TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
@@ -273,7 +274,9 @@ export default function ScanResults() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Discovered Subdomains</CardTitle>
-                    <CardDescription>Found {subdomains.length} subdomains</CardDescription>
+                    <CardDescription>
+                      Found {subdomains.length} subdomains for {scan.domain}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {subdomains.length > 0 ? (
@@ -282,25 +285,41 @@ export default function ScanResults() {
                           <TableRow>
                             <TableHead>Subdomain</TableHead>
                             <TableHead>IP Address</TableHead>
+                            <TableHead>Source</TableHead>
                             <TableHead>Status</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {subdomains.map((sub) => (
-                            <TableRow key={sub.id}>
-                              <TableCell className="font-mono">{sub.subdomain}</TableCell>
-                              <TableCell className="font-mono">{sub.ipAddress || 'N/A'}</TableCell>
+                          {subdomains.map((subdomain) => (
+                            <TableRow key={subdomain.id}>
+                              <TableCell className="font-mono text-sm">{subdomain.subdomain}</TableCell>
+                              <TableCell className="font-mono text-sm">{subdomain.ipAddress || 'N/A'}</TableCell>
                               <TableCell>
-                                <Badge variant={sub.isAlive ? 'default' : 'secondary'}>
-                                  {sub.isAlive ? 'Active' : 'Inactive'}
-                                </Badge>
+                                <div className="flex gap-1 flex-wrap">
+                                  {subdomain.source?.split(', ').map((src, idx) => (
+                                    <Badge 
+                                      key={idx} 
+                                      variant={src === 'DNS' ? 'default' : src === 'SecurityTrails' ? 'secondary' : 'outline'}
+                                      className="text-xs"
+                                    >
+                                      {src}
+                                    </Badge>
+                                  )) || <span className="text-muted-foreground text-xs">Unknown</span>}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {subdomain.isAlive ? (
+                                  <Badge variant="default">Active</Badge>
+                                ) : (
+                                  <Badge variant="secondary">Unknown</Badge>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     ) : (
-                      <p className="text-center text-muted-foreground py-8">No subdomains found</p>
+                      <p className="text-center text-muted-foreground py-8">No subdomains discovered</p>
                     )}
                   </CardContent>
                 </Card>
@@ -625,6 +644,87 @@ export default function ScanResults() {
                       </div>
                     ) : (
                       <p className="text-center text-muted-foreground py-8">No historical WHOIS data available</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Wayback Machine Tab */}
+              <TabsContent value="wayback" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5" />
+                      Internet Archive Snapshots
+                    </CardTitle>
+                    <CardDescription>
+                      Historical snapshots from the Wayback Machine
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {waybackSnapshots && waybackSnapshots.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="text-sm text-muted-foreground mb-4">
+                          Found {waybackSnapshots.length} archived snapshots
+                        </div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>URL</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Action</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {waybackSnapshots.map((snapshot) => {
+                              // Format timestamp YYYYMMDDhhmmss to readable date
+                              const formatTimestamp = (ts: string) => {
+                                if (!ts || ts.length < 14) return ts;
+                                const year = ts.substring(0, 4);
+                                const month = ts.substring(4, 6);
+                                const day = ts.substring(6, 8);
+                                const hour = ts.substring(8, 10);
+                                const minute = ts.substring(10, 12);
+                                return `${year}-${month}-${day} ${hour}:${minute}`;
+                              };
+
+                              return (
+                                <TableRow key={snapshot.id}>
+                                  <TableCell className="font-mono text-sm">
+                                    {formatTimestamp(snapshot.timestamp)}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs max-w-md truncate">
+                                    {snapshot.url}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={snapshot.status === '200' ? 'default' : 'secondary'}>
+                                      {snapshot.status || 'N/A'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => window.open(snapshot.url, '_blank')}
+                                    >
+                                      View Archive
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">No archived snapshots found</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          This domain may not have been archived by the Wayback Machine
+                        </p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

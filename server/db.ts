@@ -35,7 +35,10 @@ import {
   InsertHistoricalWhois,
   historicalIps,
   HistoricalIp,
-  InsertHistoricalIp
+  InsertHistoricalIp,
+  waybackSnapshots,
+  WaybackSnapshot,
+  InsertWaybackSnapshot
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -171,6 +174,15 @@ export async function getScanSubdomains(scanId: number): Promise<Subdomain[]> {
   if (!db) throw new Error("Database not available");
   
   return await db.select().from(subdomains).where(eq(subdomains.scanId, scanId));
+}
+
+export async function updateSubdomainSource(subdomainId: number, source: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(subdomains)
+    .set({ source })
+    .where(eq(subdomains.id, subdomainId));
 }
 
 // Port operations
@@ -331,4 +343,20 @@ export async function deleteScan(scanId: number): Promise<void> {
 
   // Finally delete the scan itself
   await db.delete(scans).where(eq(scans.id, scanId));
+}
+
+
+// Wayback Snapshots operations
+export async function createWaybackSnapshot(snapshot: InsertWaybackSnapshot): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(waybackSnapshots).values(snapshot);
+}
+
+export async function getScanWaybackSnapshots(scanId: number): Promise<WaybackSnapshot[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(waybackSnapshots).where(eq(waybackSnapshots.scanId, scanId));
 }

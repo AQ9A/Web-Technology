@@ -1,0 +1,1 @@
+ALTER TABLE `subdomains` ADD `source` varchar(50);

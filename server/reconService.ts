@@ -8,6 +8,7 @@ import * as securityTrails from './securityTrailsService';
 import { getBannerInfo } from './bannerGrabbing';
 import { getShodanHostInfo } from './shodanService';
 import { fetchSubdomainsFromCrtSh } from './crtshService';
+import { fetchWaybackSnapshots, formatWaybackTimestamp } from './waybackService';
 
 const execAsync = promisify(exec);
 
@@ -588,17 +589,34 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       const uniqueSubdomains = Array.from(new Set(allSubdomainStrings));
       console.log(`[Subdomain] Total unique subdomains: ${uniqueSubdomains.length} (${basicSubdomains.length} basic + ${crtshResult.length} from crt.sh)`);
       
-      // Save all unique subdomains
+      // Track sources for each subdomain
+      const subdomainSources = new Map<string, string[]>();
+      
+      // Track basic DNS sources
+      basicSubdomains.forEach(s => {
+        if (!subdomainSources.has(s.subdomain)) subdomainSources.set(s.subdomain, []);
+        subdomainSources.get(s.subdomain)!.push('DNS');
+      });
+      
+      // Track crt.sh sources
+      crtshResult.forEach(s => {
+        if (!subdomainSources.has(s)) subdomainSources.set(s, []);
+        subdomainSources.get(s)!.push('crt.sh');
+      });
+      
+      // Save all unique subdomains with source tracking
       for (const subdomainStr of uniqueSubdomains) {
-        // Find if we have IP info from basic discovery
         const basicInfo = basicSubdomains.find(s => s.subdomain === subdomainStr);
+        const sources = subdomainSources.get(subdomainStr) || [];
+        const source = Array.from(new Set(sources)).join(', '); // Remove duplicates and join
         
         await db.createSubdomain({
           scanId,
           subdomain: subdomainStr,
           ipAddress: basicInfo?.ipAddress,
           isAlive: basicInfo?.isAlive ?? false,
-          statusCode: basicInfo?.statusCode
+          statusCode: basicInfo?.statusCode,
+          source
         });
       }
     } catch (error) {
@@ -765,23 +783,51 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       const stSubdomains = await securityTrails.getSubdomainsList(domain);
       if (stSubdomains && stSubdomains.length > 0) {
         console.log(`Found ${stSubdomains.length} additional subdomains from SecurityTrails`);
+        const existing = await db.getScanSubdomains(scanId);
+        
         for (const subdomain of stSubdomains.slice(0, 100)) { // Limit to 100 to avoid overwhelming
           const fullDomain = `${subdomain}.${domain}`;
-          // Check if we already have this subdomain
-          const existing = await db.getScanSubdomains(scanId);
-          const alreadyExists = existing.some(s => s.subdomain === fullDomain);
+          const existingRecord = existing.find(s => s.subdomain === fullDomain);
           
-          if (!alreadyExists) {
+          if (existingRecord) {
+            // Update existing subdomain to add SecurityTrails as a source
+            const currentSources = existingRecord.source ? existingRecord.source.split(', ') : [];
+            if (!currentSources.includes('SecurityTrails')) {
+              const updatedSources = [...currentSources, 'SecurityTrails'].join(', ');
+              await db.updateSubdomainSource(existingRecord.id, updatedSources);
+            }
+          } else {
+            // Create new subdomain with SecurityTrails as source
             await db.createSubdomain({
               scanId,
               subdomain: fullDomain,
-              isAlive: false // We don't know yet, would need to check
+              source: 'SecurityTrails'
             });
           }
         }
       }
     } catch (error) {
       console.error('SecurityTrails data fetch failed (continuing anyway):', error);
+    }
+
+    // Wayback Machine Historical Snapshots
+    try {
+      console.log('[Wayback] Fetching historical snapshots from Internet Archive...');
+      const snapshots = await fetchWaybackSnapshots(domain);
+      
+      if (snapshots && snapshots.length > 0) {
+        console.log(`[Wayback] Found ${snapshots.length} snapshots`);
+        for (const snapshot of snapshots) {
+          await db.createWaybackSnapshot({
+            scanId,
+            timestamp: snapshot.timestamp,
+            url: snapshot.url,
+            status: snapshot.status
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[Wayback] Failed to fetch snapshots (continuing anyway):', error);
     }
 
     // Mark scan as completed

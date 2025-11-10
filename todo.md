@@ -145,3 +145,13 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Replace c99 with crt.sh API (c99 requires JavaScript rendering)
 - [x] Add crt.sh Certificate Transparency subdomain discovery
 - [ ] Test subdomain discovery with multiple sources
+
+
+## New Features - Data Source Badges & Wayback Machine
+- [x] Add source tracking to subdomain discovery (DNS/SecurityTrails/crt.sh)
+- [x] Update database schema to store subdomain source
+- [x] Display source badges in subdomain results UI
+- [x] Integrate Wayback Machine API
+- [x] Fetch historical snapshots from Internet Archive
+- [x] Display Wayback Machine results in new Wayback tab
+- [x] Show timeline of archived versions with View Archive buttons

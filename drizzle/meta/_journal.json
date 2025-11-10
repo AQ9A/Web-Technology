@@ -22,6 +22,20 @@
       "when": 1762811945263,
       "tag": "0002_mighty_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1762817470449,
+      "tag": "0003_tough_virginia_dare",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1762817581992,
+      "tag": "0004_cultured_nick_fury",
+      "breakpoints": true
     }
   ]
 }

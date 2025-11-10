@@ -44,6 +44,7 @@ export const subdomains = mysqlTable("subdomains", {
   ipAddress: varchar("ipAddress", { length: 45 }),
   isAlive: boolean("isAlive").default(false),
   statusCode: int("statusCode"),
+  source: varchar("source", { length: 50 }), // DNS, SecurityTrails, crt.sh
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -200,3 +201,18 @@ export const historicalIps = mysqlTable("historicalIps", {
 
 export type HistoricalIp = typeof historicalIps.$inferSelect;
 export type InsertHistoricalIp = typeof historicalIps.$inferInsert;
+
+/**
+ * Wayback Machine Snapshots table - stores historical snapshots from Internet Archive
+ */
+export const waybackSnapshots = mysqlTable("waybackSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  timestamp: varchar("timestamp", { length: 20 }).notNull(),
+  url: varchar("url", { length: 500 }).notNull(),
+  status: varchar("status", { length: 10 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WaybackSnapshot = typeof waybackSnapshots.$inferSelect;
+export type InsertWaybackSnapshot = typeof waybackSnapshots.$inferInsert;
