@@ -7,7 +7,7 @@ import * as db from './db';
 import * as securityTrails from './securityTrailsService';
 import { getBannerInfo } from './bannerGrabbing';
 import { getShodanHostInfo } from './shodanService';
-import { fetchC99Subdomains } from './c99SubdomainService';
+import { fetchSubdomainsFromCrtSh } from './crtshService';
 
 const execAsync = promisify(exec);
 
@@ -574,19 +574,19 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       // Basic subdomain discovery
       const basicSubdomains = await discoverSubdomains(domain);
       
-      // Fetch additional subdomains from C99.nl
-      console.log('[C99] Fetching subdomains from c99.nl...');
-      const c99Result = await fetchC99Subdomains(domain);
+      // Fetch additional subdomains from crt.sh (Certificate Transparency)
+      console.log('[crt.sh] Fetching subdomains from Certificate Transparency logs...');
+      const crtshResult = await fetchSubdomainsFromCrtSh(domain);
       
       // Combine all sources
       const allSubdomainStrings = [
         ...basicSubdomains.map(s => s.subdomain),
-        ...c99Result.subdomains
+        ...crtshResult
       ];
       
       // Remove duplicates
       const uniqueSubdomains = Array.from(new Set(allSubdomainStrings));
-      console.log(`[Subdomain] Total unique subdomains: ${uniqueSubdomains.length} (${basicSubdomains.length} basic + ${c99Result.subdomains.length} from C99)`);
+      console.log(`[Subdomain] Total unique subdomains: ${uniqueSubdomains.length} (${basicSubdomains.length} basic + ${crtshResult.length} from crt.sh)`);
       
       // Save all unique subdomains
       for (const subdomainStr of uniqueSubdomains) {
