@@ -6,8 +6,43 @@ import { promisify } from 'util';
 import * as db from './db';
 import * as securityTrails from './securityTrailsService';
 import { getBannerInfo } from './bannerGrabbing';
+import { getShodanHostInfo } from './shodanService';
 
 const execAsync = promisify(exec);
+
+/**
+ * Map port number to service name
+ */
+function getServiceName(port: number): string {
+  const serviceMap: { [key: number]: string } = {
+    21: 'FTP',
+    22: 'SSH',
+    23: 'Telnet',
+    25: 'SMTP',
+    53: 'DNS',
+    80: 'HTTP',
+    110: 'POP3',
+    143: 'IMAP',
+    443: 'HTTPS',
+    465: 'SMTPS',
+    587: 'SMTP (Submission)',
+    993: 'IMAPS',
+    995: 'POP3S',
+    1433: 'MSSQL',
+    3306: 'MySQL',
+    3389: 'RDP',
+    5432: 'PostgreSQL',
+    5900: 'VNC',
+    6379: 'Redis',
+    8000: 'HTTP-Alt',
+    8080: 'HTTP-Proxy',
+    8443: 'HTTPS-Alt',
+    8888: 'HTTP-Alt',
+    9000: 'SonarQube',
+    27017: 'MongoDB'
+  };
+  return serviceMap[port] || 'Unknown';
+}
 
 interface WhoisData {
   registrar?: string;
@@ -556,7 +591,26 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       const mainIp = dnsRecords.find(r => r.type === 'A')?.value;
       if (mainIp) {
         console.log(`[Port Scan] Scanning ${domain} (IP: ${mainIp})`);
-        const ports = await scanPorts(mainIp);
+        
+        // Try Shodan first for more accurate results
+        const shodanInfo = await getShodanHostInfo(mainIp);
+        let ports: PortResult[] = [];
+        
+        if (shodanInfo && shodanInfo.ports && shodanInfo.ports.length > 0) {
+          console.log(`[Shodan] Found ${shodanInfo.ports.length} open ports from Shodan database`);
+          // Use Shodan's port data (more accurate, especially for Cloudflare-protected sites)
+          ports = shodanInfo.ports.map(port => ({
+            port,
+            service: getServiceName(port),
+            state: 'open',
+            version: undefined
+          }));
+        } else {
+          // Fallback to direct TCP scanning
+          console.log(`[Port Scan] Shodan data not available, performing direct TCP scan...`);
+          ports = await scanPorts(mainIp);
+        }
+        
         console.log(`[Port Scan] Found ${ports.length} open ports on ${domain} (${mainIp})`);
         
         // Perform banner grabbing for each open port

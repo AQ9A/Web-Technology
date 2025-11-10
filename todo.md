@@ -82,3 +82,11 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Add Shodan API integration (optional with API key)
 - [x] Improve vulnerability checks to be more accurate
 - [ ] Test with real domains (google.com, github.com) to verify accuracy
+
+
+## Shodan Integration Enhancement
+- [x] Add SHODAN_API_KEY to environment variables
+- [x] Update port scanning to use Shodan data when available
+- [x] Prioritize Shodan results over direct TCP scanning for Cloudflare-protected sites
+- [ ] Display Shodan-detected ports separately or with indicator
+- [ ] Add organization/ISP info from Shodan to results page
