@@ -5,17 +5,53 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { APP_TITLE } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Shield, ArrowLeft, Loader2, Eye, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Shield, ArrowLeft, Loader2, Eye, CheckCircle2, XCircle, Clock, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function ScanHistory() {
   const { user, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scanToDelete, setScanToDelete] = useState<number | null>(null);
 
-  const { data: scans, isLoading } = trpc.scan.list.useQuery(undefined, {
+  const { data: scans, isLoading, refetch } = trpc.scan.list.useQuery(undefined, {
     enabled: !!user
   });
+
+  const deleteMutation = trpc.scan.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Scan deleted successfully');
+      refetch();
+      setDeleteDialogOpen(false);
+      setScanToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete scan: ${error.message}`);
+    }
+  });
+
+  const handleDeleteClick = (scanId: number) => {
+    setScanToDelete(scanId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (scanToDelete) {
+      deleteMutation.mutate({ scanId: scanToDelete });
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -107,14 +143,24 @@ export default function ScanHistory() {
                         {scan.completedAt ? new Date(scan.completedAt).toLocaleString() : '-'}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setLocation(`/scan/${scan.id}`)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setLocation(`/scan/${scan.id}`)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteClick(scan.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -131,6 +177,27 @@ export default function ScanHistory() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Scan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this scan and all its results. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

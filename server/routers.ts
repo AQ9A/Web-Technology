@@ -56,6 +56,22 @@ export const appRouter = router({
         return await db.getUserScans(ctx.user.id);
       }),
 
+    // Delete scan
+    delete: protectedProcedure
+      .input(z.object({
+        scanId: z.number()
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Verify ownership
+        const scan = await db.getScanById(input.scanId);
+        if (!scan || scan.userId !== ctx.user.id) {
+          throw new Error('Scan not found or unauthorized');
+        }
+        
+        await db.deleteScan(input.scanId);
+        return { success: true };
+      }),
+
     // Get scan results
     getResults: protectedProcedure
       .input(z.object({

@@ -178,9 +178,10 @@ export async function discoverSubdomains(domain: string): Promise<SubdomainResul
 }
 
 /**
- * Scan common ports
+ * Scan common ports on a host
  */
-export async function scanPorts(host: string): Promise<PortResult[]> {
+async function scanPorts(host: string): Promise<PortResult[]> {
+  // Comprehensive list of common ports to scan
   const commonPorts = [
     { port: 21, service: 'FTP' },
     { port: 22, service: 'SSH' },
@@ -192,52 +193,88 @@ export async function scanPorts(host: string): Promise<PortResult[]> {
     { port: 143, service: 'IMAP' },
     { port: 443, service: 'HTTPS' },
     { port: 465, service: 'SMTPS' },
-    { port: 587, service: 'SMTP' },
+    { port: 587, service: 'SMTP (Submission)' },
     { port: 993, service: 'IMAPS' },
     { port: 995, service: 'POP3S' },
+    { port: 1433, service: 'MSSQL' },
     { port: 3306, service: 'MySQL' },
     { port: 3389, service: 'RDP' },
     { port: 5432, service: 'PostgreSQL' },
+    { port: 5900, service: 'VNC' },
     { port: 6379, service: 'Redis' },
+    { port: 8000, service: 'HTTP-Alt' },
     { port: 8080, service: 'HTTP-Proxy' },
     { port: 8443, service: 'HTTPS-Alt' },
-    { port: 27017, service: 'MongoDB' }
+    { port: 8888, service: 'HTTP-Alt' },
+    { port: 9000, service: 'SonarQube' },
+    { port: 27017, service: 'MongoDB' },
   ];
 
   const results: PortResult[] = [];
+  const timeout = 3000; // 3 seconds timeout for each port
 
-  // Simple port check using Node.js net module
-  
-  for (const { port, service } of commonPorts) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const socket = new net.Socket();
-        const timeout = 2000;
+  console.log(`Starting port scan on ${host}...`);
 
-        socket.setTimeout(timeout);
-        
-        socket.on('connect', () => {
-          results.push({ port, service, state: 'open' });
+  // Scan ports with proper TCP connection testing
+  const scanPromises = commonPorts.map(async ({ port, service }) => {
+    return new Promise<PortResult | null>((resolve) => {
+      const socket = new net.Socket();
+      let isResolved = false;
+
+      const cleanup = () => {
+        if (!isResolved) {
+          isResolved = true;
           socket.destroy();
-          resolve();
-        });
+        }
+      };
 
-        socket.on('timeout', () => {
-          socket.destroy();
-          resolve();
-        });
+      // Set timeout
+      const timer = setTimeout(() => {
+        cleanup();
+        resolve(null); // Port is closed/filtered
+      }, timeout);
 
-        socket.on('error', () => {
-          resolve();
+      socket.on('connect', () => {
+        clearTimeout(timer);
+        cleanup();
+        // Port is OPEN - return result
+        resolve({
+          port,
+          service,
+          state: 'open',
+          version: undefined
         });
-
-        socket.connect(port, host);
       });
-    } catch (error) {
-      // Port is closed or filtered
+
+      socket.on('error', () => {
+        clearTimeout(timer);
+        cleanup();
+        resolve(null); // Port is closed/filtered
+      });
+
+      // Attempt connection
+      try {
+        socket.connect(port, host);
+      } catch (error) {
+        clearTimeout(timer);
+        cleanup();
+        resolve(null);
+      }
+    });
+  });
+
+  // Wait for all scans to complete
+  const scanResults = await Promise.all(scanPromises);
+  
+  // Filter out null results (closed ports) and collect only open ports
+  for (const result of scanResults) {
+    if (result !== null) {
+      results.push(result);
+      console.log(`Found open port: ${result.port} (${result.service})`);
     }
   }
 
+  console.log(`Port scan completed. Found ${results.length} open ports.`);
   return results;
 }
 

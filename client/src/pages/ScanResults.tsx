@@ -2,34 +2,46 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { APP_TITLE } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { 
-  Shield, 
-  ArrowLeft, 
-  Loader2, 
-  Globe, 
-  Activity, 
-  Code, 
-  Database, 
-  FileText, 
-  Lock,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Clock
-} from "lucide-react";
-import { useLocation, useRoute } from "wouter";
-import { useEffect } from "react";
+import { Shield, ArrowLeft, Loader2, CheckCircle2, XCircle, AlertTriangle, Server, Globe, Lock, Bug, Trash2, Clock, Activity, Code, FileText } from "lucide-react";
+import { useRoute, useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function ScanResults() {
   const { user, loading: authLoading } = useAuth();
   const [, params] = useRoute("/scan/:id");
   const [, setLocation] = useLocation();
   const scanId = params?.id ? parseInt(params.id) : 0;
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const deleteMutation = trpc.scan.delete.useMutation({
+    onSuccess: () => {
+      toast.success('Scan deleted successfully');
+      setLocation('/history');
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete scan: ${error.message}`);
+    }
+  });
+
+  const handleDelete = () => {
+    deleteMutation.mutate({ scanId });
+  };
 
   const { data: results, isLoading, refetch } = trpc.scan.getResults.useQuery(
     { scanId },
@@ -110,10 +122,21 @@ export default function ScanResults() {
               <Shield className="w-8 h-8 text-primary" />
               <h1 className="text-2xl font-bold gradient-text">{APP_TITLE}</h1>
             </div>
-            <Button variant="ghost" onClick={() => setLocation('/')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Scan
+              </Button>
+              <Button variant="ghost" onClick={() => setLocation('/')}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -679,6 +702,27 @@ export default function ScanResults() {
           )}
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this scan and all its results. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

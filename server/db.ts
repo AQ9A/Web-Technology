@@ -309,3 +309,26 @@ export async function getScanHistoricalIps(scanId: number): Promise<HistoricalIp
   
   return await db.select().from(historicalIps).where(eq(historicalIps.scanId, scanId));
 }
+
+// Delete scan and all related data
+export async function deleteScan(scanId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Delete all related data first (foreign key constraints)
+  await Promise.all([
+    db.delete(subdomains).where(eq(subdomains.scanId, scanId)),
+    db.delete(ports).where(eq(ports.scanId, scanId)),
+    db.delete(technologies).where(eq(technologies.scanId, scanId)),
+    db.delete(dnsRecords).where(eq(dnsRecords.scanId, scanId)),
+    db.delete(whoisInfo).where(eq(whoisInfo.scanId, scanId)),
+    db.delete(sslCertificates).where(eq(sslCertificates.scanId, scanId)),
+    db.delete(vulnerabilities).where(eq(vulnerabilities.scanId, scanId)),
+    db.delete(historicalDns).where(eq(historicalDns.scanId, scanId)),
+    db.delete(historicalWhois).where(eq(historicalWhois.scanId, scanId)),
+    db.delete(historicalIps).where(eq(historicalIps.scanId, scanId)),
+  ]);
+
+  // Finally delete the scan itself
+  await db.delete(scans).where(eq(scans.id, scanId));
+}

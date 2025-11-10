@@ -55,3 +55,12 @@
 - [x] Fetch subdomain history
 - [x] Display historical data in UI
 - [x] Add historical data to database schema
+
+
+## New Features & Improvements
+- [x] Add delete scan functionality
+- [x] Add delete button to scan results page
+- [x] Add delete button to scan history page
+- [x] Fix port scanning to be accurate and real (no fake data)
+- [x] Implement proper TCP connection testing for ports
+- [x] Remove mock/fake port data
