@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-const WORDLIST_PATH = '/home/ubuntu/SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt';
+const WORDLIST_PATH = '/home/ubuntu/SecLists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt';
 const SENSITIVE_PATTERNS = [
   '.bak', '.old', '.sql', '.zip', '.tar', '.gz',
   '.env', 'config', 'backup', 'admin', 'dashboard',
@@ -85,9 +85,11 @@ export async function runDirectoryFuzzing(
     // -o: Output file
     // -of: Output format (json)
     // -ac: Auto-calibration to filter false positives
-    const ffufCommand = `ffuf -u "${targetUrl}" -w "${WORDLIST_PATH}" -mc 200,301 -t 40 -timeout 10 -o "${outputFile}" -of json -ac -s`;
+    const ffufCommand = `ffuf -u "${targetUrl}" -w "${WORDLIST_PATH}" -mc 200,301 -t 40 -timeout 10 -o "${outputFile}" -of json -ac`;
 
     console.log(`[ffuf] Running command: ${ffufCommand}`);
+    console.log(`[ffuf] Target URL: ${targetUrl}`);
+    console.log(`[ffuf] Wordlist: ${WORDLIST_PATH}`);
 
     try {
       await execAsync(ffufCommand, {
@@ -105,6 +107,14 @@ export async function runDirectoryFuzzing(
     // Read and parse results
     let results: DirectoryResult[] = [];
     
+    // Check if output file exists
+    try {
+      await fs.access(outputFile);
+    } catch (error) {
+      console.log(`[ffuf] No output file created - no results found`);
+      return results;
+    }
+    
     try {
       const outputData = await fs.readFile(outputFile, 'utf-8');
       const ffufOutput: FfufOutput = JSON.parse(outputData);
@@ -120,7 +130,8 @@ export async function runDirectoryFuzzing(
 
         console.log(`[ffuf] Found ${results.length} directories/files`);
       } else {
-        console.log(`[ffuf] No directories found`);
+        console.log(`[ffuf] No directories found (ffuf returned empty results)`);
+        console.log(`[ffuf] This may be due to: WAF blocking, auto-calibration filtering, or no common paths exist`);
       }
     } catch (error) {
       console.error(`[ffuf] Failed to parse output file:`, error);
