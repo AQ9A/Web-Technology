@@ -5,7 +5,33 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-const WORDLIST_PATH = '/home/ubuntu/SecLists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt';
+// Cross-platform wordlist path detection
+const getWordlistPath = (): string => {
+  const platform = process.platform;
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  
+  if (platform === 'win32') {
+    // Windows: Check multiple possible locations
+    const paths = [
+      path.join(homeDir, 'SecLists', 'Discovery', 'Web-Content', 'directory-list-2.3-medium.txt'),
+      'C:\\SecLists\\Discovery\\Web-Content\\directory-list-2.3-medium.txt',
+      path.join(homeDir, 'SecLists', 'Discovery', 'Web-Content', 'DirBuster-2007_directory-list-2.3-medium.txt'),
+    ];
+    return paths[0]; // Default to user home directory
+  } else if (platform === 'darwin') {
+    // macOS
+    return path.join(homeDir, 'SecLists', 'Discovery', 'Web-Content', 'directory-list-2.3-medium.txt');
+  } else {
+    // Linux
+    const paths = [
+      '/opt/SecLists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt',
+      path.join(homeDir, 'SecLists', 'Discovery', 'Web-Content', 'DirBuster-2007_directory-list-2.3-medium.txt'),
+    ];
+    return paths[0]; // Default to /opt/SecLists
+  }
+};
+
+const WORDLIST_PATH = getWordlistPath();
 const SENSITIVE_PATTERNS = [
   '.bak', '.old', '.sql', '.zip', '.tar', '.gz',
   '.env', 'config', 'backup', 'admin', 'dashboard',

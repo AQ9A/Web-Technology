@@ -209,7 +209,11 @@ nano .env  # Edit with your database credentials
 # 8. Setup database
 pnpm db:push
 
-# 9. Start development server
+# 9. Install ffuf and SecLists (for Directory Fuzzing feature)
+sudo apt install -y ffuf
+git clone https://github.com/danielmiessler/SecLists.git ~/SecLists
+
+# 10. Start development server
 pnpm dev
 ```
 
@@ -238,9 +242,23 @@ notepad .env  # Edit with your database credentials
 # 7. Setup database
 pnpm db:push
 
-# 8. Start development server
+# 8. Install ffuf and SecLists (for Directory Fuzzing feature)
+# Download ffuf for Windows
+Invoke-WebRequest -Uri "https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_windows_amd64.zip" -OutFile "ffuf.zip"
+Expand-Archive -Path "ffuf.zip" -DestinationPath "$env:USERPROFILE\ffuf"
+
+# Add ffuf to PATH (run as Administrator)
+$oldPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+[Environment]::SetEnvironmentVariable('Path', "$oldPath;$env:USERPROFILE\ffuf", 'User')
+
+# Clone SecLists
+git clone https://github.com/danielmiessler/SecLists.git "$env:USERPROFILE\SecLists"
+
+# 9. Start development server
 pnpm dev
 ```
+
+> **Note for Windows users**: If you encounter issues with ffuf, consider using WSL (Windows Subsystem for Linux) for better compatibility. Install WSL2 and follow the Linux instructions instead.
 
 ### macOS
 
@@ -272,7 +290,11 @@ nano .env  # Edit with your database credentials
 # 8. Setup database
 pnpm db:push
 
-# 9. Start development server
+# 9. Install ffuf and SecLists (for Directory Fuzzing feature)
+brew install ffuf
+git clone https://github.com/danielmiessler/SecLists.git ~/SecLists
+
+# 10. Start development server
 pnpm dev
 ```
 

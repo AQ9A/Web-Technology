@@ -283,3 +283,13 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
   - [x] SSL/TLS Analysis
   - [x] Historical Data (SecurityTrails)
   - [x] Wayback Machine Archives
+
+
+## Feature: Windows Support
+- [x] Add Windows installation instructions in README
+- [x] Make ffuf service cross-platform (detect OS and use appropriate paths/commands)
+- [x] Add setup script for Windows (PowerShell) to download ffuf and SecLists
+- [x] Add setup script for Linux/macOS (bash)
+- [x] Handle path separators (/ vs \) across platforms
+- [ ] Test on Windows environment (requires Windows machine)
+- [x] Add troubleshooting section for Windows users in README
