@@ -50,6 +50,13 @@
       "when": 1762855969972,
       "tag": "0006_naive_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1762887772059,
+      "tag": "0007_true_magus",
+      "breakpoints": true
     }
   ]
 }

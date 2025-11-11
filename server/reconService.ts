@@ -655,43 +655,73 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
     // Get user's API keys
     const userApiKeys = await db.getUserApiKeys(userId);
     
+    // Get scan options from database
+    const scanData = await db.getScanById(scanId);
+    if (!scanData) {
+      throw new Error('Scan not found');
+    }
+    
+    const scanOptions = {
+      whois: scanData.scanWhois,
+      dns: scanData.scanDns,
+      subdomains: scanData.scanSubdomains,
+      ports: scanData.scanPorts,
+      technologies: scanData.scanTechnologies,
+      directories: scanData.scanDirectories,
+      ssl: scanData.scanSsl,
+      historical: scanData.scanHistorical,
+      wayback: scanData.scanWayback
+    };
+    
+    // Calculate total steps based on selected scans
+    const totalSteps = Object.values(scanOptions).filter(Boolean).length;
+    let currentStep = 0;
+    const progressIncrement = 90 / totalSteps; // Reserve 10% for completion
+    
     // Update scan status
     await db.updateScan(scanId, { status: 'running', progress: 10 });
 
     // WHOIS Lookup
-    try {
-      const whoisData = await performWhoisLookup(domain);
-      await db.createWhoisInfo({
-        scanId,
-        registrar: whoisData.registrar,
-        creationDate: whoisData.creationDate,
-        expirationDate: whoisData.expirationDate,
-        nameServers: whoisData.nameServers?.join(', '),
-        status: whoisData.status?.join(', '),
-        rawData: whoisData.rawData
-      });
-    } catch (error) {
-      console.error('WHOIS step failed:', error);
+    if (scanOptions.whois) {
+      try {
+        const whoisData = await performWhoisLookup(domain);
+        await db.createWhoisInfo({
+          scanId,
+          registrar: whoisData.registrar,
+          creationDate: whoisData.creationDate,
+          expirationDate: whoisData.expirationDate,
+          nameServers: whoisData.nameServers?.join(', '),
+          status: whoisData.status?.join(', '),
+          rawData: whoisData.rawData
+        });
+      } catch (error) {
+        console.error('WHOIS step failed:', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
-    await db.updateScan(scanId, { progress: 20 });
 
     // DNS Lookup
-    try {
-      const dnsRecords = await performDnsLookup(domain);
-      for (const record of dnsRecords) {
-        await db.createDnsRecord({
-          scanId,
-          recordType: record.type,
-          value: record.value
-        });
+    if (scanOptions.dns) {
+      try {
+        const dnsRecords = await performDnsLookup(domain);
+        for (const record of dnsRecords) {
+          await db.createDnsRecord({
+            scanId,
+            recordType: record.type,
+            value: record.value
+          });
+        }
+      } catch (error) {
+        console.error('DNS lookup step failed:', error);
       }
-    } catch (error) {
-      console.error('DNS lookup step failed:', error);
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
-    await db.updateScan(scanId, { progress: 35 });
 
     // Subdomain Discovery (multiple sources)
-    try {
+    if (scanOptions.subdomains) {
+      try {
       // Basic subdomain discovery
       const basicSubdomains = await discoverSubdomains(domain);
       
@@ -739,13 +769,16 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
           source
         });
       }
-    } catch (error) {
-      console.error('Subdomain discovery step failed:', error);
+      } catch (error) {
+        console.error('Subdomain discovery step failed:', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
-    await db.updateScan(scanId, { progress: 50 });
 
     // Port Scanning (on main domain)
-    try {
+    if (scanOptions.ports) {
+      try {
       const dnsRecords = await performDnsLookup(domain);
       const mainIp = dnsRecords.find(r => r.type === 'A')?.value;
       if (mainIp) {
@@ -793,13 +826,16 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
       } else {
         console.warn(`[Port Scan] No A record found for ${domain}, skipping port scan`);
       }
-    } catch (error) {
-      console.error('Port scanning step failed:', error);
+      } catch (error) {
+        console.error('Port scanning step failed:', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
-    await db.updateScan(scanId, { progress: 65 });
 
     // Technology Detection
-    try {
+    if (scanOptions.technologies) {
+      try {
       const technologies = await detectTechnologies(domain);
       for (const tech of technologies) {
         await db.createTechnology({
@@ -810,13 +846,16 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
           confidence: tech.confidence
         });
       }
-    } catch (error) {
-      console.error('Technology detection step failed:', error);
+      } catch (error) {
+        console.error('Technology detection step failed:', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
-    await db.updateScan(scanId, { progress: 80 });
 
     // SSL Certificate Check
-    try {
+    if (scanOptions.ssl) {
+      try {
       const sslCert = await getSslCertificate(domain);
       if (sslCert) {
         await db.createSslCertificate({
@@ -830,21 +869,18 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
           isValid: sslCert.isValid
         });
       }
-    } catch (error) {
-      console.error('SSL certificate check step failed:', error);
+      } catch (error) {
+        console.error('SSL certificate check step failed:', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
-    await db.updateScan(scanId, { progress: 90 });
 
-    // Vulnerability Check
-    try {
-      // Vulnerability scanning removed - focusing on reconnaissance only
-    } catch (error) {
-      console.error('Vulnerability check step failed:', error);
-    }
-    await db.updateScan(scanId, { progress: 95 });
+
 
     // SecurityTrails Historical Data
-    try {
+    if (scanOptions.historical) {
+      try {
       console.log('Fetching SecurityTrails historical data...');
       
       // Get historical DNS records
@@ -926,12 +962,16 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
           }
         }
       }
-    } catch (error) {
-      console.error('SecurityTrails data fetch failed (continuing anyway):', error);
+      } catch (error) {
+        console.error('SecurityTrails data fetch failed (continuing anyway):', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
 
     // Wayback Machine Historical Snapshots
-    try {
+    if (scanOptions.wayback) {
+      try {
       console.log('[Wayback] Fetching historical snapshots from Internet Archive...');
       const snapshots = await fetchWaybackSnapshots(domain);
       
@@ -946,13 +986,16 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
           });
         }
       }
-    } catch (error) {
-      console.error('[Wayback] Failed to fetch snapshots (continuing anyway):', error);
+      } catch (error) {
+        console.error('[Wayback] Failed to fetch snapshots (continuing anyway):', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
 
     // Directory Fuzzing
-    await db.updateScan(scanId, { progress: 95 });
-    try {
+    if (scanOptions.directories) {
+      try {
       console.log(`[Directory Fuzzing] Starting for ${domain}`);
       const { runDirectoryFuzzing } = await import('./ffufService');
       
@@ -982,8 +1025,11 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
       }
       
       console.log(`[Directory Fuzzing] Found ${directories.length} directories/files`);
-    } catch (error) {
-      console.error('[Directory Fuzzing] Failed (continuing anyway):', error);
+      } catch (error) {
+        console.error('[Directory Fuzzing] Failed (continuing anyway):', error);
+      }
+      currentStep++;
+      await db.updateScan(scanId, { progress: Math.round(10 + (currentStep * progressIncrement)) });
     }
 
     // Mark scan as completed

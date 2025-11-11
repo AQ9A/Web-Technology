@@ -106,14 +106,35 @@ export const appRouter = router({
     // Create a new scan
     create: protectedProcedure
       .input(z.object({
-        domain: z.string().min(1)
+        domain: z.string().min(1),
+        scanOptions: z.object({
+          whois: z.boolean().default(true),
+          dns: z.boolean().default(true),
+          subdomains: z.boolean().default(true),
+          ports: z.boolean().default(true),
+          technologies: z.boolean().default(true),
+          directories: z.boolean().default(true),
+          ssl: z.boolean().default(true),
+          historical: z.boolean().default(true),
+          wayback: z.boolean().default(true)
+        }).optional()
       }))
       .mutation(async ({ ctx, input }) => {
+        const options = input.scanOptions;
         const scan = await db.createScan({
           userId: ctx.user.id,
           domain: input.domain,
           status: 'pending',
-          progress: 0
+          progress: 0,
+          scanWhois: options?.whois ?? true,
+          scanDns: options?.dns ?? true,
+          scanSubdomains: options?.subdomains ?? true,
+          scanPorts: options?.ports ?? true,
+          scanTechnologies: options?.technologies ?? true,
+          scanDirectories: options?.directories ?? true,
+          scanSsl: options?.ssl ?? true,
+          scanHistorical: options?.historical ?? true,
+          scanWayback: options?.wayback ?? true
         });
 
         // Start the scan asynchronously

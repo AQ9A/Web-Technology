@@ -263,3 +263,23 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
   - Auto-calibration filtering all results
   - Tested domains don't have common paths from wordlist
 - [x] Feature is working correctly - empty results are expected for protected/minimal sites
+
+
+## Feature: Selective Scan Options
+- [x] Add checkboxes in frontend to select scan types
+- [x] Update database schema to store selected scan options
+- [x] Modify backend reconnaissance service to run only selected scans
+- [x] Add "Select All" / "Deselect All" buttons
+- [ ] Save user preferences for future scans (future enhancement)
+- [x] Update progress calculation based on selected scans
+- [ ] Show/hide tabs based on selected scans (future enhancement)
+- [x] Scan options to include:
+  - [x] WHOIS Information
+  - [x] DNS Records
+  - [x] Subdomain Enumeration
+  - [x] Port Scanning (Shodan)
+  - [x] Technology Detection
+  - [x] Directory Fuzzing (ffuf)
+  - [x] SSL/TLS Analysis
+  - [x] Historical Data (SecurityTrails)
+  - [x] Wayback Machine Archives

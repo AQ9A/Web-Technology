@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Shield, Search, Globe, Lock, Activity, AlertTriangle, Loader2, Database, Zap, Target, Server, Eye, Key, CheckCircle2, XCircle } from "lucide-react";
@@ -204,6 +205,17 @@ export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [domain, setDomain] = useState("");
+  const [scanOptions, setScanOptions] = useState({
+    whois: true,
+    dns: true,
+    subdomains: true,
+    ports: true,
+    technologies: true,
+    directories: true,
+    ssl: true,
+    historical: true,
+    wayback: true
+  });
   
   const createScan = trpc.scan.create.useMutation({
     onSuccess: (data) => {
@@ -222,9 +234,30 @@ export default function Home() {
       return;
     }
     
+    // Check if at least one scan option is selected
+    const hasSelection = Object.values(scanOptions).some(v => v);
+    if (!hasSelection) {
+      toast.error("Please select at least one scan type");
+      return;
+    }
+    
     // Remove protocol if present
     const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-    createScan.mutate({ domain: cleanDomain });
+    createScan.mutate({ domain: cleanDomain, scanOptions });
+  };
+  
+  const toggleAll = (value: boolean) => {
+    setScanOptions({
+      whois: value,
+      dns: value,
+      subdomains: value,
+      ports: value,
+      technologies: value,
+      directories: value,
+      ssl: value,
+      historical: value,
+      wayback: value
+    });
   };
 
   if (authLoading) {
@@ -395,6 +428,56 @@ export default function Home() {
                     className="text-lg h-14 border-primary/20 focus:border-primary/40 bg-background/50"
                   />
                 </div>
+                
+                {/* Scan Options */}
+                <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-primary/10">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-medium">Select Scan Types</Label>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => toggleAll(true)}>Select All</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => toggleAll(false)}>Deselect All</Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="whois" checked={scanOptions.whois} onCheckedChange={(checked) => setScanOptions({...scanOptions, whois: !!checked})} />
+                      <label htmlFor="whois" className="text-sm font-medium cursor-pointer">WHOIS Info</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="dns" checked={scanOptions.dns} onCheckedChange={(checked) => setScanOptions({...scanOptions, dns: !!checked})} />
+                      <label htmlFor="dns" className="text-sm font-medium cursor-pointer">DNS Records</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="subdomains" checked={scanOptions.subdomains} onCheckedChange={(checked) => setScanOptions({...scanOptions, subdomains: !!checked})} />
+                      <label htmlFor="subdomains" className="text-sm font-medium cursor-pointer">Subdomains</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="ports" checked={scanOptions.ports} onCheckedChange={(checked) => setScanOptions({...scanOptions, ports: !!checked})} />
+                      <label htmlFor="ports" className="text-sm font-medium cursor-pointer">Port Scan</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="technologies" checked={scanOptions.technologies} onCheckedChange={(checked) => setScanOptions({...scanOptions, technologies: !!checked})} />
+                      <label htmlFor="technologies" className="text-sm font-medium cursor-pointer">Technologies</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="directories" checked={scanOptions.directories} onCheckedChange={(checked) => setScanOptions({...scanOptions, directories: !!checked})} />
+                      <label htmlFor="directories" className="text-sm font-medium cursor-pointer">Directories (ffuf)</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="ssl" checked={scanOptions.ssl} onCheckedChange={(checked) => setScanOptions({...scanOptions, ssl: !!checked})} />
+                      <label htmlFor="ssl" className="text-sm font-medium cursor-pointer">SSL/TLS</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="historical" checked={scanOptions.historical} onCheckedChange={(checked) => setScanOptions({...scanOptions, historical: !!checked})} />
+                      <label htmlFor="historical" className="text-sm font-medium cursor-pointer">Historical Data</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="wayback" checked={scanOptions.wayback} onCheckedChange={(checked) => setScanOptions({...scanOptions, wayback: !!checked})} />
+                      <label htmlFor="wayback" className="text-sm font-medium cursor-pointer">Wayback Archive</label>
+                    </div>
+                  </div>
+                </div>
+                
                 <Button 
                   type="submit" 
                   size="lg" 

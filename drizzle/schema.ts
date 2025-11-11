@@ -27,6 +27,16 @@ export const scans = mysqlTable("scans", {
   domain: varchar("domain", { length: 255 }).notNull(),
   status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
   progress: int("progress").default(0).notNull(),
+  // Scan options - which scans to perform
+  scanWhois: boolean("scanWhois").default(true).notNull(),
+  scanDns: boolean("scanDns").default(true).notNull(),
+  scanSubdomains: boolean("scanSubdomains").default(true).notNull(),
+  scanPorts: boolean("scanPorts").default(true).notNull(),
+  scanTechnologies: boolean("scanTechnologies").default(true).notNull(),
+  scanDirectories: boolean("scanDirectories").default(true).notNull(),
+  scanSsl: boolean("scanSsl").default(true).notNull(),
+  scanHistorical: boolean("scanHistorical").default(true).notNull(),
+  scanWayback: boolean("scanWayback").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
 });
