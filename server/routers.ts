@@ -83,6 +83,12 @@ export const appRouter = router({
             if (response.status === 401 || response.status === 403) {
               return { valid: false, error: 'Invalid API key' };
             }
+            if (response.status === 429) {
+              return { 
+                valid: false, 
+                error: 'Rate limit exceeded - Free plan: 50 calls/month. Wait or upgrade plan.' 
+              };
+            }
             return { valid: false, error: `HTTP ${response.status}` };
           }
           const data = await response.json();

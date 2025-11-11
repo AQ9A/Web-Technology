@@ -194,3 +194,10 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Show success/error messages for each API key
 - [x] Display validation status with icons (green checkmark / red X)
 - [x] Real-time validation feedback with API info display
+
+
+## Bug Fix - Better API Error Messages
+- [x] Improve error handling for HTTP 429 (Rate Limit Exceeded)
+- [x] Add clear explanation for quota/rate limiting issues
+- [x] Update SecurityTrails validation to explain free plan limits (50 calls/month)
+- [x] Add helpful suggestions when API quota is exceeded
