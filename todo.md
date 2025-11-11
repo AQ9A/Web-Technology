@@ -185,3 +185,12 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Remove personal name from header
 - [x] Make project ready for public deployment
 - [x] All API services updated to accept user keys
+
+
+## New Feature - API Keys Validation
+- [x] Create backend endpoint to test Shodan API key
+- [x] Create backend endpoint to test SecurityTrails API key
+- [x] Add "Test API Keys" button in UI
+- [x] Show success/error messages for each API key
+- [x] Display validation status with icons (green checkmark / red X)
+- [x] Real-time validation feedback with API info display

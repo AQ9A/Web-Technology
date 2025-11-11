@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Shield, Search, Globe, Lock, Activity, AlertTriangle, Loader2, Database, Zap, Target, Server, Eye, Key } from "lucide-react";
+import { Shield, Search, Globe, Lock, Activity, AlertTriangle, Loader2, Database, Zap, Target, Server, Eye, Key, CheckCircle2, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -14,6 +14,9 @@ function ApiKeysForm() {
   const [shodanKey, setShodanKey] = useState("");
   const [securityTrailsKey, setSecurityTrailsKey] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [shodanStatus, setShodanStatus] = useState<{ valid?: boolean; message?: string } | null>(null);
+  const [securityTrailsStatus, setSecurityTrailsStatus] = useState<{ valid?: boolean; message?: string } | null>(null);
 
   const { data: apiKeys, refetch } = trpc.apiKeys.get.useQuery();
   const updateKeys = trpc.apiKeys.update.useMutation({
@@ -28,12 +31,51 @@ function ApiKeysForm() {
     }
   });
 
+  const testShodan = trpc.apiKeys.testShodan.useMutation();
+  const testSecurityTrails = trpc.apiKeys.testSecurityTrails.useMutation();
+
   useEffect(() => {
     if (apiKeys) {
       setShodanKey(apiKeys.shodanApiKey || "");
       setSecurityTrailsKey(apiKeys.securityTrailsApiKey || "");
     }
   }, [apiKeys]);
+
+  const handleTestKeys = async () => {
+    setIsTesting(true);
+    setShodanStatus(null);
+    setSecurityTrailsStatus(null);
+
+    // Test Shodan
+    if (shodanKey.trim()) {
+      try {
+        const result = await testShodan.mutateAsync({ apiKey: shodanKey.trim() });
+        if (result.valid) {
+          setShodanStatus({ valid: true, message: result.info || 'Valid' });
+        } else {
+          setShodanStatus({ valid: false, message: result.error || 'Invalid' });
+        }
+      } catch (error) {
+        setShodanStatus({ valid: false, message: 'Test failed' });
+      }
+    }
+
+    // Test SecurityTrails
+    if (securityTrailsKey.trim()) {
+      try {
+        const result = await testSecurityTrails.mutateAsync({ apiKey: securityTrailsKey.trim() });
+        if (result.valid) {
+          setSecurityTrailsStatus({ valid: true, message: result.info || 'Valid' });
+        } else {
+          setSecurityTrailsStatus({ valid: false, message: result.error || 'Invalid' });
+        }
+      } catch (error) {
+        setSecurityTrailsStatus({ valid: false, message: 'Test failed' });
+      }
+    }
+
+    setIsTesting(false);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,14 +93,33 @@ function ApiKeysForm() {
           <Key className="w-4 h-4" />
           Shodan API Key
         </Label>
-        <Input
-          id="shodan"
-          type="password"
-          placeholder="Enter your Shodan API key"
-          value={shodanKey}
-          onChange={(e) => setShodanKey(e.target.value)}
-          className="font-mono"
-        />
+        <div className="relative">
+          <Input
+            id="shodan"
+            type="password"
+            placeholder="Enter your Shodan API key"
+            value={shodanKey}
+            onChange={(e) => {
+              setShodanKey(e.target.value);
+              setShodanStatus(null);
+            }}
+            className="font-mono pr-10"
+          />
+          {shodanStatus && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {shodanStatus.valid ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+            </div>
+          )}
+        </div>
+        {shodanStatus && (
+          <p className={`text-xs ${shodanStatus.valid ? 'text-green-600' : 'text-red-600'}`}>
+            {shodanStatus.message}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           Get your API key from <a href="https://account.shodan.io/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Shodan Account</a>
         </p>
@@ -69,32 +130,72 @@ function ApiKeysForm() {
           <Key className="w-4 h-4" />
           SecurityTrails API Key
         </Label>
-        <Input
-          id="securitytrails"
-          type="password"
-          placeholder="Enter your SecurityTrails API key"
-          value={securityTrailsKey}
-          onChange={(e) => setSecurityTrailsKey(e.target.value)}
-          className="font-mono"
-        />
+        <div className="relative">
+          <Input
+            id="securitytrails"
+            type="password"
+            placeholder="Enter your SecurityTrails API key"
+            value={securityTrailsKey}
+            onChange={(e) => {
+              setSecurityTrailsKey(e.target.value);
+              setSecurityTrailsStatus(null);
+            }}
+            className="font-mono pr-10"
+          />
+          {securityTrailsStatus && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {securityTrailsStatus.valid ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+            </div>
+          )}
+        </div>
+        {securityTrailsStatus && (
+          <p className={`text-xs ${securityTrailsStatus.valid ? 'text-green-600' : 'text-red-600'}`}>
+            {securityTrailsStatus.message}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           Get your API key from <a href="https://securitytrails.com/app/account/credentials" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SecurityTrails Account</a>
         </p>
       </div>
 
-      <Button type="submit" disabled={isSaving} className="w-full">
-        {isSaving ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          <>
-            <Lock className="w-4 h-4 mr-2" />
-            Save API Keys
-          </>
-        )}
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={handleTestKeys} 
+          disabled={isTesting || (!shodanKey.trim() && !securityTrailsKey.trim())}
+          className="flex-1"
+        >
+          {isTesting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Testing...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Test API Keys
+            </>
+          )}
+        </Button>
+        <Button type="submit" disabled={isSaving} className="flex-1">
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Lock className="w-4 h-4 mr-2" />
+              Save API Keys
+            </>
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

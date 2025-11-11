@@ -41,6 +41,59 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+
+    // Test Shodan API key
+    testShodan: protectedProcedure
+      .input(z.object({
+        apiKey: z.string()
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const response = await fetch(`https://api.shodan.io/api-info?key=${input.apiKey}`);
+          if (!response.ok) {
+            if (response.status === 401) {
+              return { valid: false, error: 'Invalid API key' };
+            }
+            return { valid: false, error: `HTTP ${response.status}` };
+          }
+          const data = await response.json();
+          return { 
+            valid: true, 
+            info: `Plan: ${data.plan || 'Free'} | Query Credits: ${data.query_credits || 0}` 
+          };
+        } catch (error) {
+          return { valid: false, error: 'Connection failed' };
+        }
+      }),
+
+    // Test SecurityTrails API key
+    testSecurityTrails: protectedProcedure
+      .input(z.object({
+        apiKey: z.string()
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const response = await fetch('https://api.securitytrails.com/v1/ping', {
+            headers: {
+              'APIKEY': input.apiKey,
+              'Accept': 'application/json'
+            }
+          });
+          if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+              return { valid: false, error: 'Invalid API key' };
+            }
+            return { valid: false, error: `HTTP ${response.status}` };
+          }
+          const data = await response.json();
+          return { 
+            valid: true, 
+            info: data.message || 'API key is valid' 
+          };
+        } catch (error) {
+          return { valid: false, error: 'Connection failed' };
+        }
+      }),
   }),
 
   scan: router({
