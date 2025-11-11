@@ -39,6 +39,9 @@ import {
   waybackSnapshots,
   WaybackSnapshot,
   InsertWaybackSnapshot,
+  directories,
+  Directory,
+  InsertDirectory,
   userApiKeys,
   UserApiKeys,
   InsertUserApiKeys
@@ -392,4 +395,20 @@ export async function upsertUserApiKeys(keys: InsertUserApiKeys): Promise<void> 
     // Insert new keys
     await db.insert(userApiKeys).values(keys);
   }
+}
+
+
+// Directories operations
+export async function createDirectory(directory: InsertDirectory): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(directories).values(directory);
+}
+
+export async function getScanDirectories(scanId: number): Promise<Directory[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select().from(directories).where(eq(directories.scanId, scanId));
 }

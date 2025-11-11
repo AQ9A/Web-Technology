@@ -173,7 +173,8 @@ export const appRouter = router({
           historicalDns,
           historicalWhois,
           historicalIps,
-          waybackSnapshots
+          waybackSnapshots,
+          directories
         ] = await Promise.all([
           db.getScanById(input.scanId),
           db.getScanSubdomains(input.scanId),
@@ -186,7 +187,8 @@ export const appRouter = router({
           db.getScanHistoricalDns(input.scanId),
           db.getScanHistoricalWhois(input.scanId),
           db.getScanHistoricalIps(input.scanId),
-          db.getScanWaybackSnapshots(input.scanId)
+          db.getScanWaybackSnapshots(input.scanId),
+          db.getScanDirectories(input.scanId)
         ]);
 
         return {
@@ -197,6 +199,7 @@ export const appRouter = router({
           dnsRecords,
           whoisInfo,
           sslCertificate,
+          directories,
           vulnerabilities,
           historicalDns,
           historicalWhois,

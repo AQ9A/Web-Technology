@@ -950,6 +950,42 @@ export async function performFullScan(scanId: number, domain: string, userId: nu
       console.error('[Wayback] Failed to fetch snapshots (continuing anyway):', error);
     }
 
+    // Directory Fuzzing
+    await db.updateScan(scanId, { progress: 95 });
+    try {
+      console.log(`[Directory Fuzzing] Starting for ${domain}`);
+      const { runDirectoryFuzzing } = await import('./ffufService');
+      
+      // Try HTTPS first, fallback to HTTP if it fails
+      let directories: any[] = [];
+      try {
+        directories = await runDirectoryFuzzing(domain, 'https');
+      } catch (error) {
+        console.log('[Directory Fuzzing] HTTPS failed, trying HTTP...');
+        try {
+          directories = await runDirectoryFuzzing(domain, 'http');
+        } catch (httpError) {
+          console.error('[Directory Fuzzing] Both HTTPS and HTTP failed:', httpError);
+        }
+      }
+
+      // Save directories to database
+      for (const dir of directories) {
+        await db.createDirectory({
+          scanId,
+          path: dir.path,
+          statusCode: dir.statusCode,
+          contentLength: dir.contentLength,
+          responseTime: dir.responseTime,
+          isSensitive: dir.isSensitive
+        });
+      }
+      
+      console.log(`[Directory Fuzzing] Found ${directories.length} directories/files`);
+    } catch (error) {
+      console.error('[Directory Fuzzing] Failed (continuing anyway):', error);
+    }
+
     // Mark scan as completed
     await db.updateScan(scanId, { 
       status: 'completed', 

@@ -218,6 +218,23 @@ export type WaybackSnapshot = typeof waybackSnapshots.$inferSelect;
 export type InsertWaybackSnapshot = typeof waybackSnapshots.$inferInsert;
 
 /**
+ * Directories table - stores discovered directories and files from fuzzing
+ */
+export const directories = mysqlTable("directories", {
+  id: int("id").autoincrement().primaryKey(),
+  scanId: int("scanId").notNull(),
+  path: varchar("path", { length: 500 }).notNull(),
+  statusCode: int("statusCode").notNull(),
+  contentLength: int("contentLength"),
+  responseTime: int("responseTime"), // in milliseconds
+  isSensitive: boolean("isSensitive").default(false), // backup, config, admin files
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Directory = typeof directories.$inferSelect;
+export type InsertDirectory = typeof directories.$inferInsert;
+
+/**
  * User API Keys table - stores user's API keys for external services
  */
 export const userApiKeys = mysqlTable("userApiKeys", {

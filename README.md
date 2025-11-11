@@ -60,7 +60,7 @@ Comprehensive domain intelligence gathering tool with advanced subdomain enumera
 ### Home Page & API Configuration
 
 <div align="center">
-  <img src="screenshots/home-page.png" alt="Home Page" width="800"/>
+  <img src="screenshots/home-page-new.png" alt="Home Page" width="800"/>
   <p><em>Clean and intuitive interface with API keys configuration and domain scanner</em></p>
 </div>
 

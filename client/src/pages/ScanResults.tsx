@@ -91,7 +91,7 @@ export default function ScanResults() {
     );
   }
 
-  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, historicalDns, historicalWhois, historicalIps, waybackSnapshots } = results;
+  const { scan, subdomains, ports, technologies, dnsRecords, whoisInfo, sslCertificate, historicalDns, historicalWhois, historicalIps, waybackSnapshots, directories } = results;
   const vulnerabilities = []; // Removed vulnerability scanning
 
   const getStatusIcon = (status: string) => {
@@ -168,11 +168,12 @@ export default function ScanResults() {
           {/* Results Tabs */}
           {scan.status === 'completed' && (
             <Tabs defaultValue="overview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-8">
+              <TabsList className="grid w-full grid-cols-9">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="subdomains">Subdomains</TabsTrigger>
                 <TabsTrigger value="ports">Ports</TabsTrigger>
                 <TabsTrigger value="technologies">Technologies</TabsTrigger>
+                <TabsTrigger value="directories">Directories</TabsTrigger>
                 <TabsTrigger value="dns">DNS</TabsTrigger>
                 <TabsTrigger value="ssl">SSL/TLS</TabsTrigger>
                 <TabsTrigger value="historical">Historical</TabsTrigger>
@@ -450,6 +451,95 @@ export default function ScanResults() {
                         <p className="text-muted-foreground">No technologies detected</p>
                         <p className="text-sm text-muted-foreground mt-2">
                           Try scanning a different domain or check if the site is accessible
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Directories Tab */}
+              <TabsContent value="directories">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Discovered Directories & Files
+                    </CardTitle>
+                    <CardDescription>
+                      Found {directories?.length || 0} paths (Status: 200, 301)
+                      {directories?.filter((d: any) => d.isSensitive).length > 0 && (
+                        <span className="ml-2 text-orange-500">
+                          • {directories.filter((d: any) => d.isSensitive).length} sensitive files detected
+                        </span>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {directories && directories.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Path</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Size</TableHead>
+                            <TableHead>Response Time</TableHead>
+                            <TableHead>Type</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {directories.map((dir: any) => (
+                            <TableRow key={dir.id} className={dir.isSensitive ? 'bg-orange-500/5' : ''}>
+                              <TableCell className="font-mono text-sm">
+                                <div className="flex items-center gap-2">
+                                  {dir.isSensitive && (
+                                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                                  )}
+                                  <a 
+                                    href={`${scan.domain}${dir.path}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-cyan-500 hover:underline"
+                                  >
+                                    {dir.path}
+                                  </a>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={dir.statusCode === 200 ? 'default' : 'secondary'}
+                                  className={dir.statusCode === 200 ? 'bg-green-500' : 'bg-yellow-500'}
+                                >
+                                  {dir.statusCode}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {dir.contentLength ? `${(dir.contentLength / 1024).toFixed(2)} KB` : '-'}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {dir.responseTime ? `${dir.responseTime}ms` : '-'}
+                              </TableCell>
+                              <TableCell>
+                                {dir.isSensitive ? (
+                                  <Badge variant="destructive" className="text-xs">
+                                    Sensitive
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs">
+                                    Normal
+                                  </Badge>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-12">
+                        <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">No directories or files discovered</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          The fuzzing process may have been blocked or no common paths were found
                         </p>
                       </div>
                     )}

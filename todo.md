@@ -235,3 +235,17 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Ensure new screenshot shows updated UI (cyan theme)
 - [x] Screenshot now shows clean interface without personal info
 - [x] Push to GitHub
+
+
+## New Feature - Directory Fuzzing with ffuf
+- [x] Install ffuf in server environment (v2.1.0)
+- [x] Download SecLists wordlists (directory-list-2.3-medium.txt)
+- [x] Update database schema to add directories table
+- [x] Create ffuf service module with auto-calibration
+- [x] Add directory fuzzing to reconnaissance scan (progress 95%)
+- [x] Create Directories tab in UI (9 tabs total now)
+- [x] Display results with status codes (200=green, 301=yellow)
+- [x] Add file size (KB) and response time (ms)
+- [x] Highlight sensitive files with AlertTriangle icon and orange background
+- [x] Clickable paths that open in new tab
+- [x] HTTPS fallback to HTTP if needed
