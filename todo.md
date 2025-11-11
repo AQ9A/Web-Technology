@@ -227,3 +227,11 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Add demo section to README with step-by-step guide
 - [x] Update README with screenshot links
 - [x] Commit and push to GitHub
+
+
+## Update Screenshot
+- [x] Capture new screenshot from current design
+- [x] Replace old screenshot showing personal name
+- [x] Ensure new screenshot shows updated UI (cyan theme)
+- [x] Screenshot now shows clean interface without personal info
+- [x] Push to GitHub
