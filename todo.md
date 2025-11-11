@@ -219,3 +219,11 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Setup GitHub repository
 - [x] Push code to GitHub
 - [x] Verify repository is public and accessible
+
+
+## Screenshots & Demo Section
+- [x] Capture professional screenshots from application
+- [x] Create screenshots directory
+- [x] Add demo section to README with step-by-step guide
+- [x] Update README with screenshot links
+- [x] Commit and push to GitHub

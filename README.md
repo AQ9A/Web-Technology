@@ -55,6 +55,37 @@ Comprehensive domain intelligence gathering tool with advanced subdomain enumera
 
 ---
 
+## 📸 Screenshots
+
+### Home Page & API Configuration
+
+<div align="center">
+  <img src="screenshots/home-page.png" alt="Home Page" width="800"/>
+  <p><em>Clean and intuitive interface with API keys configuration and domain scanner</em></p>
+</div>
+
+### Quick Demo
+
+**Step 1**: Configure your API keys (optional but recommended for full features)
+
+**Step 2**: Enter target domain (e.g., `example.com`)
+
+**Step 3**: Click "Start Reconnaissance" and watch real-time progress
+
+**Step 4**: Explore results across 8 comprehensive tabs:
+- 🔍 **Overview** - Executive summary with key findings
+- 🌐 **Subdomains** - Discovered subdomains with source badges (DNS/SecurityTrails/crt.sh)
+- 🔌 **Ports** - Open ports and running services
+- 💻 **Technologies** - Detected tech stack with versions and colorful icons
+- 📡 **DNS** - Complete DNS records analysis
+- 🔒 **SSL/TLS** - Certificate details and security status
+- 📊 **Historical** - DNS/WHOIS/IP changes over time
+- 🕰️ **Wayback** - Internet Archive snapshots
+
+> **Note**: Screenshots show the actual production interface. The tool provides a modern dark theme optimized for security professionals.
+
+---
+
 ## ✨ Features
 
 ### 🔎 **Reconnaissance Capabilities**
