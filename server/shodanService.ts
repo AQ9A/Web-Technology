@@ -18,18 +18,19 @@ export interface ShodanHostInfo {
 
 /**
  * Get host information from Shodan
- * Note: Requires SHODAN_API_KEY environment variable
+ * @param ip - IP address to lookup
+ * @param apiKey - Optional Shodan API key (uses env var if not provided)
  */
-export async function getShodanHostInfo(ip: string): Promise<ShodanHostInfo | null> {
-  const apiKey = process.env.SHODAN_API_KEY;
+export async function getShodanHostInfo(ip: string, apiKey?: string): Promise<ShodanHostInfo | null> {
+  const key = apiKey || process.env.SHODAN_API_KEY;
   
-  if (!apiKey) {
+  if (!key) {
     console.warn('[Shodan] API key not configured, skipping Shodan lookup');
     return null;
   }
 
   try {
-    const response = await fetch(`https://api.shodan.io/shodan/host/${ip}?key=${apiKey}`);
+    const response = await fetch(`https://api.shodan.io/shodan/host/${ip}?key=${key}`);
     
     if (!response.ok) {
       if (response.status === 404) {
@@ -61,17 +62,19 @@ export async function getShodanHostInfo(ip: string): Promise<ShodanHostInfo | nu
 
 /**
  * Search Shodan for a domain
+ * @param domain - Domain to search
+ * @param apiKey - Optional Shodan API key (uses env var if not provided)
  */
-export async function searchShodanDomain(domain: string): Promise<any | null> {
-  const apiKey = process.env.SHODAN_API_KEY;
+export async function searchShodanDomain(domain: string, apiKey?: string): Promise<any | null> {
+  const key = apiKey || process.env.SHODAN_API_KEY;
   
-  if (!apiKey) {
+  if (!key) {
     return null;
   }
 
   try {
     const response = await fetch(
-      `https://api.shodan.io/shodan/host/search?key=${apiKey}&query=hostname:${domain}`
+      `https://api.shodan.io/shodan/host/search?key=${key}&query=hostname:${domain}`
     );
     
     if (!response.ok) {

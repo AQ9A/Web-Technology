@@ -216,3 +216,18 @@ export const waybackSnapshots = mysqlTable("waybackSnapshots", {
 
 export type WaybackSnapshot = typeof waybackSnapshots.$inferSelect;
 export type InsertWaybackSnapshot = typeof waybackSnapshots.$inferInsert;
+
+/**
+ * User API Keys table - stores user's API keys for external services
+ */
+export const userApiKeys = mysqlTable("userApiKeys", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(), // One set of keys per user
+  shodanApiKey: varchar("shodanApiKey", { length: 255 }),
+  securityTrailsApiKey: varchar("securityTrailsApiKey", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserApiKeys = typeof userApiKeys.$inferSelect;
+export type InsertUserApiKeys = typeof userApiKeys.$inferInsert;

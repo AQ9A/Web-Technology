@@ -5,10 +5,99 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { Shield, Search, Globe, Lock, Activity, AlertTriangle, Loader2, Database, Zap, Target, Server, Eye } from "lucide-react";
-import { useState } from "react";
+import { Shield, Search, Globe, Lock, Activity, AlertTriangle, Loader2, Database, Zap, Target, Server, Eye, Key } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+
+function ApiKeysForm() {
+  const [shodanKey, setShodanKey] = useState("");
+  const [securityTrailsKey, setSecurityTrailsKey] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { data: apiKeys, refetch } = trpc.apiKeys.get.useQuery();
+  const updateKeys = trpc.apiKeys.update.useMutation({
+    onSuccess: () => {
+      toast.success("API keys saved successfully!");
+      refetch();
+      setIsSaving(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to save API keys: ${error.message}`);
+      setIsSaving(false);
+    }
+  });
+
+  useEffect(() => {
+    if (apiKeys) {
+      setShodanKey(apiKeys.shodanApiKey || "");
+      setSecurityTrailsKey(apiKeys.securityTrailsApiKey || "");
+    }
+  }, [apiKeys]);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    updateKeys.mutate({
+      shodanApiKey: shodanKey.trim() || undefined,
+      securityTrailsApiKey: securityTrailsKey.trim() || undefined
+    });
+  };
+
+  return (
+    <form onSubmit={handleSave} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="shodan" className="flex items-center gap-2">
+          <Key className="w-4 h-4" />
+          Shodan API Key
+        </Label>
+        <Input
+          id="shodan"
+          type="password"
+          placeholder="Enter your Shodan API key"
+          value={shodanKey}
+          onChange={(e) => setShodanKey(e.target.value)}
+          className="font-mono"
+        />
+        <p className="text-xs text-muted-foreground">
+          Get your API key from <a href="https://account.shodan.io/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Shodan Account</a>
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="securitytrails" className="flex items-center gap-2">
+          <Key className="w-4 h-4" />
+          SecurityTrails API Key
+        </Label>
+        <Input
+          id="securitytrails"
+          type="password"
+          placeholder="Enter your SecurityTrails API key"
+          value={securityTrailsKey}
+          onChange={(e) => setSecurityTrailsKey(e.target.value)}
+          className="font-mono"
+        />
+        <p className="text-xs text-muted-foreground">
+          Get your API key from <a href="https://securitytrails.com/app/account/credentials" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SecurityTrails Account</a>
+        </p>
+      </div>
+
+      <Button type="submit" disabled={isSaving} className="w-full">
+        {isSaving ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Lock className="w-4 h-4 mr-2" />
+            Save API Keys
+          </>
+        )}
+      </Button>
+    </form>
+  );
+}
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -155,17 +244,7 @@ export default function Home() {
                 <Eye className="w-4 h-4 mr-2" />
                 Scan History
               </Button>
-              <div className="h-8 w-px bg-border" />
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </span>
-                </div>
-                <span className="text-sm text-muted-foreground hidden md:block">
-                  {user.name || user.email}
-                </span>
-              </div>
+              {/* User info removed for privacy */}
             </div>
           </div>
         </div>
@@ -234,6 +313,22 @@ export default function Home() {
                   )}
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* API Keys Settings */}
+          <Card className="bg-card/60 backdrop-blur-xl border-primary/10 hover:border-primary/20 transition-all duration-300 animate-in fade-in slide-in-from-bottom duration-1000 delay-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                API Keys Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure your API keys for enhanced scanning capabilities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ApiKeysForm />
             </CardContent>
           </Card>
 

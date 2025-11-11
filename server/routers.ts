@@ -19,6 +19,30 @@ export const appRouter = router({
     }),
   }),
 
+  apiKeys: router({
+    // Get user's API keys
+    get: protectedProcedure
+      .query(async ({ ctx }) => {
+        const keys = await db.getUserApiKeys(ctx.user.id);
+        return keys || null;
+      }),
+
+    // Update user's API keys
+    update: protectedProcedure
+      .input(z.object({
+        shodanApiKey: z.string().optional(),
+        securityTrailsApiKey: z.string().optional()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.upsertUserApiKeys({
+          userId: ctx.user.id,
+          shodanApiKey: input.shodanApiKey || null,
+          securityTrailsApiKey: input.securityTrailsApiKey || null
+        });
+        return { success: true };
+      }),
+  }),
+
   scan: router({
     // Create a new scan
     create: protectedProcedure
@@ -34,7 +58,7 @@ export const appRouter = router({
         });
 
         // Start the scan asynchronously
-        reconService.performFullScan(scan.id, input.domain).catch(err => {
+        reconService.performFullScan(scan.id, input.domain, ctx.user.id).catch(err => {
           console.error('Scan error:', err);
         });
 

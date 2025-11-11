@@ -38,7 +38,10 @@ import {
   InsertHistoricalIp,
   waybackSnapshots,
   WaybackSnapshot,
-  InsertWaybackSnapshot
+  InsertWaybackSnapshot,
+  userApiKeys,
+  UserApiKeys,
+  InsertUserApiKeys
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -359,4 +362,34 @@ export async function getScanWaybackSnapshots(scanId: number): Promise<WaybackSn
   if (!db) throw new Error("Database not available");
   
   return await db.select().from(waybackSnapshots).where(eq(waybackSnapshots.scanId, scanId));
+}
+
+// User API Keys operations
+export async function getUserApiKeys(userId: number): Promise<UserApiKeys | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(userApiKeys).where(eq(userApiKeys.userId, userId)).limit(1);
+  return result[0];
+}
+
+export async function upsertUserApiKeys(keys: InsertUserApiKeys): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getUserApiKeys(keys.userId);
+  
+  if (existing) {
+    // Update existing keys
+    await db.update(userApiKeys)
+      .set({
+        shodanApiKey: keys.shodanApiKey,
+        securityTrailsApiKey: keys.securityTrailsApiKey,
+        updatedAt: new Date()
+      })
+      .where(eq(userApiKeys.userId, keys.userId));
+  } else {
+    // Insert new keys
+    await db.insert(userApiKeys).values(keys);
+  }
 }

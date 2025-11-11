@@ -174,3 +174,14 @@ Note: testphp.vulnweb.com is a deliberately vulnerable test site that has many p
 - [x] Display technology logos (WordPress, React, Vue, Angular, etc.)
 - [x] Improve visual presentation of Technologies tab with card grid layout
 - [x] Add color-coded borders and backgrounds for each technology category
+
+
+## Deployment Preparation - API Keys & Privacy
+- [x] Add API keys table to database schema
+- [x] Create API keys management page
+- [x] Allow users to input their own Shodan API key
+- [x] Allow users to input their own SecurityTrails API key
+- [x] Update reconnaissance service to use user's API keys
+- [x] Remove personal name from header
+- [x] Make project ready for public deployment
+- [x] All API services updated to accept user keys

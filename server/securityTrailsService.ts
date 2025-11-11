@@ -4,7 +4,6 @@
  */
 
 const SECURITYTRAILS_API_BASE = 'https://api.securitytrails.com/v1';
-const API_KEY = process.env.SECURITYTRAILS_API_KEY;
 
 interface SecurityTrailsResponse<T> {
   data?: T;
@@ -50,15 +49,17 @@ interface HistoricalIPRecord {
 /**
  * Make API request to SecurityTrails
  */
-async function makeSecurityTrailsRequest<T>(endpoint: string): Promise<SecurityTrailsResponse<T>> {
-  if (!API_KEY) {
+async function makeSecurityTrailsRequest<T>(endpoint: string, apiKey?: string): Promise<SecurityTrailsResponse<T>> {
+  const key = apiKey || process.env.SECURITYTRAILS_API_KEY;
+  
+  if (!key) {
     return { error: 'SecurityTrails API key not configured' };
   }
 
   try {
     const response = await fetch(`${SECURITYTRAILS_API_BASE}${endpoint}`, {
       headers: {
-        'APIKEY': API_KEY,
+        'APIKEY': key,
         'Accept': 'application/json'
       }
     });
@@ -79,43 +80,47 @@ async function makeSecurityTrailsRequest<T>(endpoint: string): Promise<SecurityT
 /**
  * Get domain details including current DNS records
  */
-export async function getDomainDetails(domain: string) {
-  return await makeSecurityTrailsRequest(`/domain/${domain}`);
+export async function getDomainDetails(domain: string, apiKey?: string) {
+  return await makeSecurityTrailsRequest(`/domain/${domain}`, apiKey);
 }
 
 /**
  * Get historical DNS records for a domain
  */
-export async function getHistoricalDNS(domain: string, recordType: string = 'a') {
+export async function getHistoricalDNS(domain: string, recordType: string = 'a', apiKey?: string) {
   return await makeSecurityTrailsRequest<{ records: HistoricalDNSRecord[] }>(
-    `/history/${domain}/dns/${recordType}`
+    `/history/${domain}/dns/${recordType}`,
+    apiKey
   );
 }
 
 /**
  * Get historical WHOIS data
  */
-export async function getHistoricalWhois(domain: string) {
+export async function getHistoricalWhois(domain: string, apiKey?: string) {
   return await makeSecurityTrailsRequest<{ result: HistoricalWhoisRecord[] }>(
-    `/history/${domain}/whois`
+    `/history/${domain}/whois`,
+    apiKey
   );
 }
 
 /**
  * Get all subdomains for a domain
  */
-export async function getSubdomains(domain: string) {
+export async function getSubdomains(domain: string, apiKey?: string) {
   return await makeSecurityTrailsRequest<SubdomainData>(
-    `/domain/${domain}/subdomains`
+    `/domain/${domain}/subdomains`,
+    apiKey
   );
 }
 
 /**
  * Get historical IP addresses for a domain
  */
-export async function getHistoricalIPs(domain: string) {
+export async function getHistoricalIPs(domain: string, apiKey?: string) {
   return await makeSecurityTrailsRequest<{ records: HistoricalIPRecord[] }>(
-    `/history/${domain}/dns/a`
+    `/history/${domain}/dns/a`,
+    apiKey
   );
 }
 
@@ -167,8 +172,8 @@ export async function getComprehensiveHistoricalData(domain: string) {
 /**
  * Get subdomain count and list
  */
-export async function getSubdomainsList(domain: string): Promise<string[]> {
-  const result = await getSubdomains(domain);
+export async function getSubdomainsList(domain: string, apiKey?: string): Promise<string[]> {
+  const result = await getSubdomains(domain, apiKey);
   
   if (result.error || !result.data) {
     console.error('Failed to fetch subdomains:', result.error);
@@ -181,12 +186,12 @@ export async function getSubdomainsList(domain: string): Promise<string[]> {
 /**
  * Get historical DNS changes summary
  */
-export async function getDNSHistory(domain: string) {
+export async function getDNSHistory(domain: string, apiKey?: string) {
   const types = ['a', 'aaaa', 'mx', 'ns', 'txt', 'soa'];
   const results: Record<string, any> = {};
 
   for (const type of types) {
-    const result = await getHistoricalDNS(domain, type);
+    const result = await getHistoricalDNS(domain, type, apiKey);
     if (!result.error && result.data) {
       results[type] = result.data;
     }

@@ -650,8 +650,11 @@ export async function checkVulnerabilities(domain: string): Promise<Vulnerabilit
 /**
  * Perform full reconnaissance scan
  */
-export async function performFullScan(scanId: number, domain: string): Promise<void> {
+export async function performFullScan(scanId: number, domain: string, userId: number): Promise<void> {
   try {
+    // Get user's API keys
+    const userApiKeys = await db.getUserApiKeys(userId);
+    
     // Update scan status
     await db.updateScan(scanId, { status: 'running', progress: 10 });
 
@@ -749,7 +752,7 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
         console.log(`[Port Scan] Scanning ${domain} (IP: ${mainIp})`);
         
         // Try Shodan first for more accurate results
-        const shodanInfo = await getShodanHostInfo(mainIp);
+        const shodanInfo = await getShodanHostInfo(mainIp, userApiKeys?.shodanApiKey || undefined);
         let ports: PortResult[] = [];
         
         if (shodanInfo && shodanInfo.ports && shodanInfo.ports.length > 0) {
@@ -845,7 +848,7 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       console.log('Fetching SecurityTrails historical data...');
       
       // Get historical DNS records
-      const historicalDNSResult = await securityTrails.getDNSHistory(domain);
+      const historicalDNSResult = await securityTrails.getDNSHistory(domain, userApiKeys?.securityTrailsApiKey || undefined);
       if (historicalDNSResult) {
         for (const [recordType, data] of Object.entries(historicalDNSResult)) {
           if (data && data.records) {
@@ -867,7 +870,7 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       }
 
       // Get historical WHOIS data
-      const historicalWhoisResult = await securityTrails.getHistoricalWhois(domain);
+      const historicalWhoisResult = await securityTrails.getHistoricalWhois(domain, userApiKeys?.securityTrailsApiKey || undefined);
       if (historicalWhoisResult.data && historicalWhoisResult.data.result) {
         for (const whoisRecord of historicalWhoisResult.data.result) {
           await db.createHistoricalWhois({
@@ -884,7 +887,7 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       }
 
       // Get historical IPs
-      const historicalIPsResult = await securityTrails.getHistoricalIPs(domain);
+      const historicalIPsResult = await securityTrails.getHistoricalIPs(domain, userApiKeys?.securityTrailsApiKey || undefined);
       if (historicalIPsResult.data && historicalIPsResult.data.records) {
         for (const ipRecord of historicalIPsResult.data.records) {
           await db.createHistoricalIp({
@@ -897,7 +900,7 @@ export async function performFullScan(scanId: number, domain: string): Promise<v
       }
 
       // Enhanced subdomain discovery from SecurityTrails
-      const stSubdomains = await securityTrails.getSubdomainsList(domain);
+      const stSubdomains = await securityTrails.getSubdomainsList(domain, userApiKeys?.securityTrailsApiKey || undefined);
       if (stSubdomains && stSubdomains.length > 0) {
         console.log(`Found ${stSubdomains.length} additional subdomains from SecurityTrails`);
         const existing = await db.getScanSubdomains(scanId);
